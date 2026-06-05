@@ -1,6 +1,6 @@
 # Painel Admin
 
-Interface web para gerenciar clientes, acompanhar leads, visualizar conversas e monitorar métricas. Construída com React 18 + shadcn/ui + Tailwind CSS.
+Interface web para gerenciar sites, acompanhar leads, visualizar conversas e monitorar métricas. Construída com React 18 + shadcn/ui + Tailwind CSS.
 
 **URL (produção):** `https://your-domain.com/admin`  
 **URL (desenvolvimento):** `http://localhost:5173/admin/`  
@@ -13,13 +13,11 @@ Interface web para gerenciar clientes, acompanhar leads, visualizar conversas e 
 
 ```
 Sidebar
-├── Clientes      → gerenciar sites/clientes
-├── Leads         → leads qualificados com filtros
-├── Sessões       → histórico de conversas
-└── Dashboard     → KPIs e gráficos (últimos 30 dias)
+├── Sites       → gerenciar sites e tokens
+├── Leads       → leads qualificados com filtros
+├── Sessões     → histórico de conversas
+└── Dashboard   → métricas com seletor de site e período
 ```
-
-Clicando em um cliente na tabela de Clientes → abre a **Visão por site** com estatísticas detalhadas.
 
 ---
 
@@ -29,30 +27,37 @@ Lista todos os sites ativos com estatísticas acumuladas (sessões totais, leads
 
 **Ações por site:**
 - **Ver detalhes** → Visão por site (gráficos, uso mensal, últimos leads)
-- **Editar** → atualiza nome, domínio, bot, WhatsApp e limite
+- **Editar** → atualiza nome, domínio, bot, WhatsApp, limite e mensagem de limite
 - **Ativar/Desativar** → controla se o widget aceita novas sessões
-- **Regenerar token** → invalida o token atual e gera um novo
+- **Regenerar token** → invalida o token atual e gera um novo (exige digitar **SIM**)
 - **Excluir** → soft delete (dados preservados, site pode ser restaurado)
 
 **Seção "Sites excluídos"** (colapsável na mesma página) → permite restaurar um site deletado.
 
-### Criar novo site
+### Criar / editar site
 
 Campos obrigatórios:
-- Nome do cliente
-- Domínio (ex: `clinicasilva.com.br`) — **usado para validação de segurança**: o widget só funciona quando carregado a partir deste domínio exato (ou subdomínios). Para testes locais, use `localhost:3001`.
-- Nome do bot
-- Número do WhatsApp (formato: `5511999990000` — país + DDD + número)
+- **Nome do site**
+- **Domínio** (ex: `clinicasilva.com.br`) — usado para validação de segurança: o widget só funciona a partir deste domínio exato (ou subdomínios). Para testes locais, use `localhost:3001`.
+- **Nome do bot**
+- **WhatsApp** (formato: `5511999990000` — país + DDD + número, apenas dígitos)
 
 Campos opcionais:
 - URL do avatar do bot
 - Limite mensal de conversas (`0` ou vazio = ilimitado)
+- **Mensagem ao atingir o limite** — texto exibido na bolha do widget quando o limite mensal é atingido. Máx. 500 caracteres.
 
-O token é gerado automaticamente.
+O token é gerado automaticamente ao criar. Ao criar ou regenerar, o painel exibe o snippet `<script>` completo pronto para colar no site.
+
+### Regenerar token
+
+Ao clicar em "Regenerar token":
+1. Exige digitar **SIM** para confirmar (o token antigo para de funcionar imediatamente)
+2. Exibe o novo snippet `<script>` com o token atualizado para copiar
 
 ### Confirmação de ações críticas
 
-Excluir e Restaurar exigem digitar **SIM** no campo de confirmação antes de prosseguir. Protege contra cliques acidentais.
+Excluir, Restaurar e Regenerar token exigem digitar **SIM** antes de prosseguir.
 
 ---
 
@@ -93,57 +98,57 @@ Histórico de todas as conversas (ativas, qualificadas e abandonadas).
 
 ## Dashboard
 
-Visão geral de todos os clientes nos últimos 30 dias.
+Visão de métricas com **seletor de site** e **filtro de período** no topo.
 
-**KPIs:**
-- Sites ativos
-- Total de sessões
-- Total de leads
-- Taxa de qualificação (%)
+### Seletor de site
 
-**Gráficos:**
-- Leads por dia (barras — últimos 30 dias)
-- Distribuição por tipo de projeto (rosca)
-- Top 5 sites por volume de leads (tabela)
+- **Todos os sites** — dados agregados de toda a plataforma
+- **Site individual** — dados específicos daquele site (idêntico à Visão por site)
 
----
+### Filtro de período
 
-## Visão por site
+| Opção | Intervalo |
+|---|---|
+| 7 dias | Últimos 7 dias |
+| 30 dias | Últimos 30 dias (padrão) |
+| 90 dias | Últimos 90 dias |
+| Todo período | Histórico completo |
 
-Acesse via **"Ver detalhes"** no menu de ações de qualquer cliente.
+O filtro afeta KPIs, gráficos de atividade, tipos de projeto e horários de pico.  
+**Não** afeta: "Uso mensal" (sempre mês corrente) e "Totais históricos" (sempre acumulado).
 
-### Bloco de uso mensal
+### Bloco "Uso mensal"
 
-Mostra conversas usadas vs. limite do mês atual:
-- Barra de progresso com cor adaptável
-  - 🟢 Verde: < 75%
-  - 🟡 Laranja: 75–89%
-  - 🔴 Vermelho: ≥ 90%
-- Data de renovação (dia 1 do próximo mês)
-- Nome do plano (se configurado)
+Exibido apenas na visão de site individual (não faz sentido para "todos os sites").
+
+Mostra conversas usadas vs. limite do mês atual com barra de progresso.  
+Ao atingir 100%, o widget do site é substituído automaticamente por um botão de WhatsApp.
 
 ### KPIs do período
 
 | Métrica | O que significa |
 |---|---|
-| Leads este mês | Leads qualificados no mês atual |
-| Taxa de qualificação | % de sessões que geraram lead |
-| Média de msgs/conversa | Mede o engajamento do visitante |
-| Taxa de abandono | % de sessões que terminaram sem qualificar |
+| Leads no período | Leads qualificados no intervalo selecionado |
+| Média msgs/conversa | Engajamento médio do visitante |
+| Saíram sem finalizar | % de sessões que encerraram sem qualificar |
 
 ### Gráficos
 
-- **Atividade (30 dias):** sessões e leads sobrepostos por dia
-- **Tipos de projeto:** distribuição dos leads por categoria, com barras de proporção
-- **Horários de pico:** distribuição por hora do dia (últimas 4 semanas)
+- **Atividade:** sessões e leads por dia (ou por mês, no modo "todo período")
+- **Tipos de projeto:** distribuição dos leads por categoria
+- **Horários de pico:** distribuição por hora do dia
 
 ### Últimos leads
 
-Os 5 leads mais recentes com botão de WhatsApp direto.
+Os 5 leads mais recentes. Na visão "todos os sites", exibe também o nome do site de origem.
 
-### Código de instalação
+---
 
-Snippet `<script>` pronto para copiar e entregar ao cliente. Botão de copiar integrado.
+## Visão por site
+
+Acesse via **"Ver detalhes"** no menu de ações de qualquer site, ou selecione o site no Dashboard.
+
+Idêntica ao Dashboard com site individual selecionado. Inclui adicionalmente o **Código de instalação** — snippet `<script>` pronto para copiar e colar no site do cliente.
 
 ---
 
@@ -152,4 +157,4 @@ Snippet `<script>` pronto para copiar e entregar ao cliente. Botão de copiar in
 - JWT expira em 8 horas — ao expirar, o painel redireciona para o login automaticamente
 - Após logout, o token é removido do `localStorage`
 - Erros 401 da API limpam o token e redirecionam para o login
-- Ações críticas (excluir, restaurar) exigem confirmação digitada
+- Ações críticas (excluir, restaurar, regenerar token) exigem confirmação digitada

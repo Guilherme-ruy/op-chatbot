@@ -20,7 +20,8 @@ Cada site/cliente cadastrado no painel. O `token` é enviado pelo widget para id
 | `bot_avatar_url` | TEXT | ✓ | URL do avatar do bot |
 | `whatsapp_number` | VARCHAR(20) | ✓ | Número WhatsApp (ex: `5511999990000`) |
 | `plan_name` | VARCHAR(50) | ✓ | Nome do plano (ex: Básico, Pro) |
-| `monthly_session_limit` | INT | ✓ | Limite de conversas/mês. `NULL` = ilimitado |
+| `monthly_session_limit` | INT | ✓ | Limite de conversas/mês. `NULL` ou `0` = ilimitado |
+| `limit_message` | VARCHAR(500) | ✓ | Mensagem exibida na bolha do widget ao atingir o limite |
 | `active` | BOOLEAN | — | Se o site está ativo |
 | `deleted_at` | TIMESTAMPTZ | ✓ | Soft delete — `NULL` = não deletado |
 | `created_at` | TIMESTAMPTZ | — | Data de criação |

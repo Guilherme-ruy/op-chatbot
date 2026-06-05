@@ -39,11 +39,11 @@ Retorna dados do usuário autenticado.
 
 ---
 
-## Sites (Clientes)
+## Sites
 
 ### GET /sites
 
-Lista todos os clientes ativos (não deletados) com estatísticas agregadas.
+Lista todos os sites ativos (não deletados) com estatísticas agregadas.
 
 **Response 200:** Array de sites com:
 ```json
@@ -55,8 +55,8 @@ Lista todos os clientes ativos (não deletados) com estatísticas agregadas.
   "bot_name": "Ana",
   "bot_avatar_url": null,
   "whatsapp_number": "5511999990000",
-  "plan_name": "Pro",
   "monthly_session_limit": 500,
+  "limit_message": "Olá! Atingimos nosso limite mensal. Fale conosco pelo WhatsApp!",
   "active": true,
   "deleted_at": null,
   "created_at": "2026-06-01T00:00:00Z",
@@ -70,13 +70,13 @@ Lista todos os clientes ativos (não deletados) com estatísticas agregadas.
 
 ### GET /sites/deleted
 
-Lista clientes em soft delete (excluídos pelo painel).
+Lista sites em soft delete (excluídos pelo painel).
 
 ---
 
 ### POST /sites
 
-Cria um novo cliente. Token gerado automaticamente com prefixo `chatbot_`.
+Cria um novo site. Token gerado automaticamente com prefixo `chatbot_`.
 
 **Request:**
 ```json
@@ -86,8 +86,8 @@ Cria um novo cliente. Token gerado automaticamente com prefixo `chatbot_`.
   "bot_name": "Ana da Clínica Silva",
   "bot_avatar_url": null,
   "whatsapp_number": "5511999990000",
-  "plan_name": "Básico",
-  "monthly_session_limit": 100
+  "monthly_session_limit": 100,
+  "limit_message": "Olá! Atingimos nosso limite. Fale conosco pelo WhatsApp!"
 }
 ```
 
@@ -99,9 +99,9 @@ Cria um novo cliente. Token gerado automaticamente com prefixo `chatbot_`.
 
 ### PATCH /sites/:id
 
-Atualiza campos do cliente. Apenas os campos enviados são alterados.
+Atualiza campos do site. Apenas os campos enviados são alterados.
 
-**Campos aceitos:** `name`, `domain`, `bot_name`, `bot_avatar_url`, `whatsapp_number`, `plan_name`, `monthly_session_limit`, `active`
+**Campos aceitos:** `name`, `domain`, `bot_name`, `bot_avatar_url`, `whatsapp_number`, `monthly_session_limit`, `limit_message`, `active`
 
 ---
 
@@ -115,7 +115,7 @@ Soft delete — define `deleted_at = NOW()` e `active = false`. Os dados são pr
 
 ### POST /sites/:id/restore
 
-Restaura um cliente soft-deletado (`deleted_at = NULL`, `active = true`).
+Restaura um site soft-deletado (`deleted_at = NULL`, `active = true`).
 
 ---
 
@@ -127,28 +127,56 @@ Gera um novo token para o site. **O token anterior para de funcionar imediatamen
 
 ---
 
-### GET /sites/:id/stats
+### GET /sites/all/stats?days=30
 
-Retorna estatísticas detalhadas de um site. Ver [admin-panel.md](../admin-panel.md#visão-por-site) para a descrição de cada campo.
+Retorna estatísticas **agregadas de todos os sites**.
+
+**Query params:**
+
+| Param | Valores aceitos | Padrão | Descrição |
+|---|---|---|---|
+| `days` | `7`, `30`, `90`, `0` | `30` | Período. `0` = todo o histórico |
+
+**Response 200:** Mesmo formato de `/sites/:id/stats` mas com `site: null`.
+
+---
+
+### GET /sites/:id/stats?days=30
+
+Retorna estatísticas detalhadas de um site específico.
+
+**Query params:**
+
+| Param | Valores aceitos | Padrão | Descrição |
+|---|---|---|---|
+| `days` | `7`, `30`, `90`, `0` | `30` | Período. `0` = todo o histórico |
+
+**Campos afetados pelo período:** `leads_in_period`, `avg_messages_per_session`, `abandonment_rate`, `sessions_by_day`, `leads_by_project`, `peak_hours`.
+
+**Campos fixos (independem do período):**
+- `sessions_this_month`, `qualified_this_month` — sempre mês corrente (para card "Uso mensal")
+- `total_sessions_all`, `total_leads_all` — sempre histórico completo
+- `recent_leads` — sempre os 5 leads mais recentes
 
 **Response 200:**
 ```json
 {
-  "site": { ... },
+  "site": { "id": "...", "name": "Clínica Silva", "domain": "...", "monthly_session_limit": 500, ... },
   "sessions_this_month": 42,
   "qualified_this_month": 18,
-  "leads_this_month": 18,
+  "leads_in_period": 15,
   "total_sessions_all": 150,
   "total_leads_all": 63,
   "avg_messages_per_session": 7.2,
   "abandonment_rate": 28.5,
-  "qualification_rate": 42,
   "sessions_by_day": [{ "date": "2026-06-01", "sessions": 3, "leads": 1 }],
   "leads_by_project": [{ "type": "site", "count": 10 }],
   "peak_hours": [{ "hour": 14, "count": 8 }],
-  "recent_leads": [{ "id": "...", "name": "João", "contact": "...", ... }]
+  "recent_leads": [{ "id": "...", "name": "João", "contact": "...", "project_type": "site", "whatsapp_url": "...", "created_at": "..." }]
 }
 ```
+
+> Para `days=0` (todo o período), `sessions_by_day` agrupa por **mês** (`"date": "2026-06"`) em vez de por dia.
 
 ---
 
@@ -212,26 +240,4 @@ Retorna o histórico completo de mensagens de uma sessão.
   { "id": "...", "role": "bot", "content": "Olá! ...", "created_at": "..." },
   { "id": "...", "role": "user", "content": "Oi, meu nome é João", "created_at": "..." }
 ]
-```
-
----
-
-## Dashboard
-
-### GET /dashboard
-
-Retorna KPIs e séries temporais dos últimos 30 dias (todos os sites).
-
-**Response 200:**
-```json
-{
-  "total_sites_active": 5,
-  "total_sessions_30d": 320,
-  "total_qualified_30d": 134,
-  "total_leads_30d": 134,
-  "qualification_rate": 41,
-  "leads_by_day": [{ "date": "2026-06-01", "count": 4 }],
-  "leads_by_project": [{ "type": "site", "count": 80 }],
-  "top_sites": [{ "name": "Clínica Silva", "domain": "...", "leads": 18, "sessions": 42 }]
-}
 ```

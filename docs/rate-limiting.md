@@ -1,6 +1,6 @@
 # Rate Limiting
 
-O sistema tem dois níveis de limitação: um **global** (por IP) e um **por site** (por plano contratado).
+O sistema tem dois níveis de limitação: um **global** (por IP) e um **por site** (limite mensal configurado no painel).
 
 ---
 
@@ -26,7 +26,7 @@ Proteção contra brute-force de senha.
 
 ## Nível 2 — Por site (limite mensal de conversas)
 
-Configurado individualmente por cliente no painel admin.
+Configurado individualmente por site no painel admin.
 
 ### Como funciona
 
@@ -47,37 +47,41 @@ site.monthly_session_limit = 100   →  máximo 100 conversas/mês
 
 O contador reinicia automaticamente no dia 1 de cada mês. Não há intervenção manual necessária — a contagem usa `DATE_TRUNC('month', NOW())` na query.
 
-### Resposta quando o limite é atingido
+### Comportamento do widget quando o limite é atingido
 
-**HTTP 429:**
+**HTTP 429** é retornado com:
 ```json
 {
   "error": "Limite mensal de conversas atingido.",
   "limitReached": true,
-  "whatsappUrl": "https://wa.me/5511999990000?text=..."
+  "whatsappUrl": "https://wa.me/5511999990000?text=...",
+  "limitMessage": "Olá! No momento não conseguimos atender. Fale conosco pelo WhatsApp!"
 }
 ```
 
-O widget exibe uma mensagem amigável ao visitante e um botão de WhatsApp como fallback. Nenhum custo de LLM é gerado.
+O widget reage assim:
+- O painel de chat fecha
+- O botão flutuante **transforma-se em um botão de WhatsApp direto** — o visitante clica e já abre a conversa no WhatsApp
+- Se `limitMessage` estiver configurado, aparece na **bolha proativa** acima do botão
+- Se nenhum número de WhatsApp estiver configurado, o widget some completamente
+- Nenhum custo de LLM é gerado
 
-### Alertas no painel
+### Monitoramento no painel
 
-Na **Visão por site**, a barra de uso muda de cor conforme a ocupação:
-
-| Uso | Cor | Ação recomendada |
-|---|---|---|
-| < 75% | 🟢 Verde | Normal |
-| 75–89% | 🟡 Laranja | Monitorar |
-| ≥ 90% | 🔴 Vermelho | Aumentar o limite ou o plano |
+No **Dashboard** ou **Visão por site**, o card "Uso mensal" exibe:
+- Conversas usadas vs. limite do mês atual
+- Barra de progresso com cor adaptável (verde / laranja / vermelho)
+- Data de renovação (dia 1 do próximo mês)
+- Nota informativa: ao atingir 100%, o widget exibe apenas o botão de WhatsApp
 
 ---
 
-## Configurar o limite de um cliente
+## Configurar o limite de um site
 
-No painel admin → Clientes → menu de ações → **Editar**:
+No painel admin → Sites → menu de ações → **Editar**:
 
-- **Nome do plano:** texto livre (ex: Básico, Pro, Empresarial)
-- **Limite mensal de conversas:** número inteiro positivo. Deixar vazio = ilimitado.
+- **Limite mensal de conversas:** número inteiro positivo. Deixar vazio ou `0` = ilimitado.
+- **Mensagem ao atingir o limite:** texto exibido na bolha do widget quando o limite é atingido (máx. 500 chars). Opcional — se vazio, o botão de WhatsApp aparece sem mensagem.
 
 ---
 
