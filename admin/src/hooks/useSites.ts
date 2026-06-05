@@ -12,7 +12,7 @@ export function useSites() {
   const fetchSites = useCallback(async () => {
     setLoading(true); setError(null)
     try   { setSites(await sitesApi.getSites()) }
-    catch (e: any) { setError(e?.response?.data?.error ?? 'Erro ao carregar clientes.') }
+    catch (e: any) { setError(e?.response?.data?.error ?? 'Erro ao carregar sites.') }
     finally { setLoading(false) }
   }, [])
 

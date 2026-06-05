@@ -23,20 +23,20 @@ Clicando em um cliente na tabela de Clientes → abre a **Visão por site** com 
 
 ---
 
-## Clientes
+## Sites
 
 Lista todos os sites ativos com estatísticas acumuladas (sessões totais, leads totais).
 
-**Ações por cliente:**
+**Ações por site:**
 - **Ver detalhes** → Visão por site (gráficos, uso mensal, últimos leads)
-- **Editar** → atualiza nome, domínio, bot, WhatsApp, plano e limite
+- **Editar** → atualiza nome, domínio, bot, WhatsApp e limite
 - **Ativar/Desativar** → controla se o widget aceita novas sessões
 - **Regenerar token** → invalida o token atual e gera um novo
-- **Excluir** → soft delete (dados preservados, cliente pode ser restaurado)
+- **Excluir** → soft delete (dados preservados, site pode ser restaurado)
 
-**Seção "Clientes excluídos"** (colapsável na mesma página) → permite restaurar um cliente deletado.
+**Seção "Sites excluídos"** (colapsável na mesma página) → permite restaurar um site deletado.
 
-### Criar novo cliente
+### Criar novo site
 
 Campos obrigatórios:
 - Nome do cliente

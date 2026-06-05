@@ -5,7 +5,7 @@ import { Building2, Users, MessageSquare, BarChart3, Bot, LogOut, Menu } from 'l
 import { cn } from '@/lib/utils'
 
 const navItems = [
-  { title: 'Clientes',  icon: Building2,     to: '/clients'   },
+  { title: 'Sites',     icon: Building2,     to: '/clients'   },
   { title: 'Leads',     icon: Users,         to: '/leads'     },
   { title: 'Sessões',   icon: MessageSquare, to: '/sessions'  },
   { title: 'Dashboard', icon: BarChart3,     to: '/dashboard' },

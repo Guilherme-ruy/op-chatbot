@@ -55,8 +55,8 @@ export default function ClientsPage() {
   async function handleSave(form: SiteFormData) {
     setFormSaving(true)
     try {
-      if (editingSite) { await update(editingSite.id, form); toast.success('Cliente atualizado.') }
-      else             { await create(form);                 toast.success('Cliente criado.') }
+      if (editingSite) { await update(editingSite.id, form); toast.success('Site atualizado.') }
+      else             { await create(form);                 toast.success('Site criado.') }
       setFormOpen(false)
     } catch (e: any) { toast.error(e?.response?.data?.error ?? 'Erro ao salvar.') }
     finally { setFormSaving(false) }
@@ -71,18 +71,18 @@ export default function ClientsPage() {
 
   function askDelete(site: Site) {
     setConfirmConfig({
-      title: 'Excluir cliente', color: 'error', label: 'Excluir',
-      message: `O site "${site.domain}" será removido da lista. Os dados são preservados e o cliente pode ser restaurado depois.`,
-      action: async () => { await remove(site.id); toast.success('Cliente excluído.') },
+      title: 'Excluir site', color: 'error', label: 'Excluir',
+      message: `O site "${site.domain}" será removido da lista. Os dados são preservados e o site pode ser restaurado depois.`,
+      action: async () => { await remove(site.id); toast.success('Site excluído.') },
     })
     setConfirmOpen(true)
   }
 
   function askRestore(site: Site) {
     setConfirmConfig({
-      title: 'Restaurar cliente', color: 'success', label: 'Restaurar',
+      title: 'Restaurar site', color: 'success', label: 'Restaurar',
       message: `O site "${site.domain}" será reativado e voltará a aparecer na lista.`,
-      action: async () => { await restore(site.id); toast.success('Cliente restaurado.') },
+      action: async () => { await restore(site.id); toast.success('Site restaurado.') },
     })
     setConfirmOpen(true)
   }
@@ -115,11 +115,11 @@ export default function ClientsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold">Clientes</h1>
+          <h1 className="text-xl font-bold">Sites</h1>
           <p className="text-sm text-muted-foreground">Gerencie os sites que utilizam o chatbot</p>
         </div>
         <Button onClick={openCreate} size="sm">
-          <Plus size={15} /> Novo cliente
+          <Plus size={15} /> Novo site
         </Button>
       </div>
 
@@ -130,7 +130,7 @@ export default function ClientsPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Cliente</TableHead>
+              <TableHead>Site</TableHead>
               <TableHead>Domínio</TableHead>
               <TableHead>Bot</TableHead>
               <TableHead>Status</TableHead>
@@ -201,11 +201,11 @@ export default function ClientsPage() {
         </Table>
       </div>
 
-      {/* Clientes excluídos */}
+      {/* Sites excluídos */}
       <Collapsible open={deletedOpen} onOpenChange={toggleDeleted}>
         <div className="rounded-xl border bg-white shadow-sm overflow-hidden">
           <CollapsibleTrigger className="flex items-center justify-between w-full px-5 py-4 hover:bg-slate-50 transition-colors">
-            <span className="text-sm font-medium text-muted-foreground">Clientes excluídos</span>
+            <span className="text-sm font-medium text-muted-foreground">Sites excluídos</span>
             <ChevronDown size={16} className={`text-muted-foreground transition-transform ${deletedOpen ? 'rotate-180' : ''}`} />
           </CollapsibleTrigger>
           <CollapsibleContent>
@@ -213,7 +213,7 @@ export default function ClientsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Cliente</TableHead>
+                    <TableHead>Site</TableHead>
                     <TableHead>Domínio</TableHead>
                     <TableHead>Bot</TableHead>
                     <TableHead>Excluído em</TableHead>

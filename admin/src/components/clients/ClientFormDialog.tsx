@@ -73,13 +73,13 @@ export default function ClientFormDialog({ open, onOpenChange, site, saving, onS
       <DialogContent hideCloseButton className="max-w-lg flex flex-col gap-0 p-0 max-h-[90vh] overflow-hidden">
 
         <DialogHeader className="flex-none px-6 pt-6 pb-4 border-b">
-          <DialogTitle>{isEdit ? 'Editar cliente' : 'Novo cliente'}</DialogTitle>
+          <DialogTitle>{isEdit ? 'Editar site' : 'Novo site'}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
 
           <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-            <Field label="Nome do cliente *" error={errors.name?.message}>
+            <Field label="Nome do site *" error={errors.name?.message}>
               <Input {...register('name')} placeholder="Ex: Clínica Silva" />
             </Field>
             <Field label="Domínio *" error={errors.domain?.message}>
@@ -122,7 +122,7 @@ export default function ClientFormDialog({ open, onOpenChange, site, saving, onS
               Cancelar
             </Button>
             <Button type="submit" disabled={saving}>
-              {saving ? 'Salvando...' : isEdit ? 'Salvar' : 'Criar cliente'}
+              {saving ? 'Salvando...' : isEdit ? 'Salvar' : 'Criar site'}
             </Button>
           </DialogFooter>
 
