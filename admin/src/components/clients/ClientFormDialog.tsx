@@ -11,7 +11,15 @@ import type { Site, SiteFormData } from '@/types/admin'
 
 const schema = z.object({
   name:                  z.string().min(1, 'Obrigatório'),
-  domain:                z.string().regex(/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, 'Domínio inválido (ex: site.com.br)'),
+  domain: z.string().min(1, 'Obrigatório')
+    .transform(v => v.replace(/^https?:\/\//, '').replace(/\/$/, '').trim())
+    .refine(
+      v =>
+        /^localhost(:\d+)?$/.test(v) ||
+        /^127\.0\.0\.1(:\d+)?$/.test(v) ||
+        /^([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}(:\d+)?$/.test(v),
+      'Domínio inválido (ex: clinicasilva.com.br ou localhost:3001)'
+    ),
   bot_name:              z.string().min(1, 'Obrigatório'),
   bot_avatar_url:        z.string().nullable().optional(),
   whatsapp_number:       z.string().regex(/^\d{10,15}$/, 'Apenas dígitos, 10–15 chars (ex: 5511999990000)'),
@@ -55,43 +63,47 @@ export default function ClientFormDialog({ open, onOpenChange, site, saving, onS
 
   return (
     <Dialog open={open} onOpenChange={v => !saving && onOpenChange(v)}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent hideCloseButton className="max-w-lg flex flex-col gap-0 p-0 max-h-[90vh] overflow-hidden">
+
+        <DialogHeader className="flex-none px-6 pt-6 pb-4 border-b">
           <DialogTitle>{isEdit ? 'Editar cliente' : 'Novo cliente'}</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <Field label="Nome do cliente *" error={errors.name?.message}>
-            <Input {...register('name')} placeholder="Ex: Clínica Silva" />
-          </Field>
-          <Field label="Domínio *" error={errors.domain?.message}>
-            <Input {...register('domain')} placeholder="Ex: clinicasilva.com.br" />
-            <p className="text-xs text-muted-foreground mt-1">Sem http:// — apenas o domínio</p>
-          </Field>
-          <Field label="Nome do bot *" error={errors.bot_name?.message}>
-            <Input {...register('bot_name')} placeholder="Ex: Ana da Clínica Silva" />
-          </Field>
-          <Field label="URL do avatar (opcional)" error={errors.bot_avatar_url?.message}>
-            <Input {...register('bot_avatar_url')} placeholder="https://..." />
-          </Field>
-          <Field label="WhatsApp *" error={errors.whatsapp_number?.message}>
-            <Input {...register('whatsapp_number')} placeholder="Ex: 5511999990000" />
-            <p className="text-xs text-muted-foreground mt-1">Código do país + DDD + número, sem espaços</p>
-          </Field>
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
 
-          <Separator />
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Plano e Limites</p>
+          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+            <Field label="Nome do cliente *" error={errors.name?.message}>
+              <Input {...register('name')} placeholder="Ex: Clínica Silva" />
+            </Field>
+            <Field label="Domínio *" error={errors.domain?.message}>
+              <Input {...register('domain')} placeholder="Ex: clinicasilva.com.br ou localhost:3001" />
+              <p className="text-xs text-muted-foreground mt-1">Ex: clinicasilva.com.br ou localhost:3001</p>
+            </Field>
+            <Field label="Nome do bot *" error={errors.bot_name?.message}>
+              <Input {...register('bot_name')} placeholder="Ex: Ana da Clínica Silva" />
+            </Field>
+            <Field label="URL do avatar (opcional)" error={errors.bot_avatar_url?.message}>
+              <Input {...register('bot_avatar_url')} placeholder="https://..." />
+            </Field>
+            <Field label="WhatsApp *" error={errors.whatsapp_number?.message}>
+              <Input {...register('whatsapp_number')} placeholder="Ex: 5511999990000" />
+              <p className="text-xs text-muted-foreground mt-1">Código do país + DDD + número, sem espaços</p>
+            </Field>
 
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Nome do plano" error={errors.plan_name?.message}>
-              <Input {...register('plan_name')} placeholder="Ex: Básico, Pro" />
-            </Field>
-            <Field label="Limite mensal" error={errors.monthly_session_limit?.message}>
-              <Input {...register('monthly_session_limit')} type="number" min={1} placeholder="Vazio = ilimitado" />
-            </Field>
+            <Separator />
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Plano e Limites</p>
+
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Nome do plano" error={errors.plan_name?.message}>
+                <Input {...register('plan_name')} placeholder="Ex: Básico, Pro" />
+              </Field>
+              <Field label="Limite mensal" error={errors.monthly_session_limit?.message}>
+                <Input {...register('monthly_session_limit')} type="number" min={1} placeholder="Vazio = ilimitado" />
+              </Field>
+            </div>
           </div>
 
-          <DialogFooter className="pt-2">
+          <DialogFooter className="flex-none border-t px-6 py-4 bg-background">
             <Button type="button" variant="outline" disabled={saving} onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
@@ -99,6 +111,7 @@ export default function ClientFormDialog({ open, onOpenChange, site, saving, onS
               {saving ? 'Salvando...' : isEdit ? 'Salvar' : 'Criar cliente'}
             </Button>
           </DialogFooter>
+
         </form>
       </DialogContent>
     </Dialog>
