@@ -1,0 +1,27 @@
+# Dependências
+node_modules/
+
+# Build outputs
+dist/
+public/widget.js
+public/admin/
+
+# Variáveis de ambiente
+.env
+.env.local
+.env.*.local
+admin/.env
+admin/.env.local
+admin/.env.*.local
+
+# Docker overrides locais
+docker-compose.override.yml
+
+# Logs
+*.log
+npm-debug.log*
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+desktop.ini
