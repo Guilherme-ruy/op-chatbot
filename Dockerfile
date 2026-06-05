@@ -12,8 +12,9 @@ COPY . .
 # Compila widget e TypeScript
 RUN npm run build:widget && npm run build
 
-# Copia arquivos estáticos que o tsc não inclui automaticamente
-RUN cp src/db/schema.sql dist/db/schema.sql
+# Copia arquivos SQL que o tsc não inclui automaticamente
+RUN cp src/db/schema.sql dist/db/schema.sql && \
+    cp src/db/admin_migration.sql dist/db/admin_migration.sql
 
 # Remove devDependencies para imagem menor
 RUN npm prune --omit=dev

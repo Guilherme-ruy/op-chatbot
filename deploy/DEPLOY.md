@@ -41,20 +41,22 @@ curl -fsSL https://get.docker.com | sh
 
 ---
 
-## 4. Na VPS — rodar as migrations e subir o container
+## 4. Na VPS — criar usuário admin e subir o container
 
 ```bash
 cd /opt/op-chatbot
 
-# Aplicar schema do banco
-npm run db:migrate
-npm run db:admin-migrate   # cria usuário admin (use ADMIN_EMAIL + ADMIN_PASSWORD do .env)
+# Cria o usuário do painel admin (apenas na primeira vez)
+npm run db:admin-migrate
 
-# Subir container
+# Subir container — o schema do banco é aplicado automaticamente na inicialização
 docker compose up -d --build
 docker compose ps          # deve mostrar "healthy"
 curl http://localhost:3050/health   # deve retornar {"status":"ok"}
 ```
+
+> O `npm run db:migrate` não é necessário em produção. O servidor aplica
+> o schema automaticamente ao iniciar.
 
 ---
 

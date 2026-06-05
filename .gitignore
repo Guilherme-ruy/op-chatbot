@@ -5,6 +5,7 @@ node_modules/
 dist/
 public/widget.js
 public/admin/
+public/test.html
 
 # Variáveis de ambiente
 .env

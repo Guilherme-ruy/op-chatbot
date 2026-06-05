@@ -54,20 +54,25 @@ cd admin && npm install && cd ..
 
 # 2. Configurar variáveis de ambiente
 cp .env.example .env
-# edite .env com suas chaves (LLM, banco, SMTP)
+# edite .env com suas chaves (LLM, banco, SMTP, ADMIN_EMAIL, ADMIN_PASSWORD)
 
-# 3. Criar banco e rodar migrations
-npm run db:migrate
-npm run db:admin-migrate   # cria o usuário do painel admin
+# 3. Criar o usuário admin (apenas uma vez)
+npm run db:admin-migrate
 
 # 4. Rodar em desenvolvimento
-npm run dev          # backend na porta 3001
+npm run dev          # backend na porta 3001 — schema aplicado automaticamente
 npm run dev:admin    # painel admin na porta 5173
 ```
 
 Acesse o painel em `http://localhost:5173/admin/` e a API em `http://localhost:3001`.
 
 > Guia completo de instalação: [docs/setup.md](./docs/setup.md)
+
+---
+
+## Testando localmente
+
+Após rodar `npm run dev` e `npm run db:migrate`, abra `examples/test-site.html` no navegador, substitua `SEU_TOKEN_AQUI` pelo token impresso no terminal e o widget aparecerá na página.
 
 ---
 

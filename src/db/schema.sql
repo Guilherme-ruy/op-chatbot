@@ -60,9 +60,6 @@ CREATE TABLE IF NOT EXISTS leads (
 CREATE INDEX IF NOT EXISTS idx_leads_session_id ON leads(session_id);
 CREATE INDEX IF NOT EXISTS idx_leads_created_at ON leads(created_at);
 
--- ── Seed: site de exemplo (opcional) ─────────────────────────────────────────
--- Remova ou adapte antes de rodar em produção.
--- Os tokens reais são gerados pelo script db:migrate.
-INSERT INTO sites (name, domain, token, bot_name) VALUES
-  ('Meu Site',  'example.com',  'REPLACE_TOKEN_EXAMPLE', 'Assistente')
-ON CONFLICT (domain) DO NOTHING;
+-- ── Seed inicial (opcional) ───────────────────────────────────────────────────
+-- Execute `npm run db:migrate` para gerar um site de exemplo com token real.
+-- Em produção, crie sites diretamente pelo painel admin.

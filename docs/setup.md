@@ -70,17 +70,17 @@ A `DATABASE_URL` já está configurada no override — ajuste as credenciais con
 
 ---
 
-## 4. Rodar migrations
+## 4. Criar o usuário admin
 
 ```bash
-# Schema principal (sites, sessions, messages, leads)
-npm run db:migrate
-
-# Tabelas de admin + colunas extras (admin_users, deleted_at, whatsapp_number, etc.)
 npm run db:admin-migrate
 ```
 
-> **Atenção:** `db:admin-migrate` usa `ADMIN_EMAIL` e `ADMIN_PASSWORD` do `.env` para criar o usuário inicial do painel. Após rodar, `ADMIN_PASSWORD` pode ser removido do `.env`.
+Usa `ADMIN_EMAIL` e `ADMIN_PASSWORD` do `.env` para criar o usuário inicial do painel. Após rodar, `ADMIN_PASSWORD` pode ser removido do `.env`.
+
+> **O schema do banco (tabelas, índices) é aplicado automaticamente** toda vez que o servidor sobe — não é necessário rodar `db:migrate` para o funcionamento básico.
+>
+> Execute `npm run db:migrate` apenas se quiser gerar um site de exemplo com token para testes rápidos.
 
 ---
 

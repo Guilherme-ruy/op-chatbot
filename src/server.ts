@@ -6,6 +6,7 @@ import jwt from '@fastify/jwt';
 import { join } from 'path';
 import { config } from './config';
 import { pool } from './db/pool';
+import { runMigrations } from './db/autoMigrate';
 import { chatRoutes } from './routes/chat';
 import { adminAuthRoutes } from './routes/admin/auth';
 import { adminSitesRoutes } from './routes/admin/sites';
@@ -103,22 +104,28 @@ async function build() {
 }
 
 // ── Start ─────────────────────────────────────────────────────────────────────
-build().then(async app => {
-  try {
-    await app.listen({ port: config.port, host: '0.0.0.0' });
-    console.log(`🚀 Chatbot rodando na porta ${config.port}`);
-  } catch (err) {
-    app.log.error(err);
-    process.exit(1);
-  }
+runMigrations()
+  .then(build)
+  .then(async app => {
+    try {
+      await app.listen({ port: config.port, host: '0.0.0.0' });
+      console.log(`🚀 Chatbot rodando na porta ${config.port}`);
+    } catch (err) {
+      app.log.error(err);
+      process.exit(1);
+    }
 
-  // Graceful shutdown — fecha conexões do pool ao encerrar o processo
-  const shutdown = async (signal: string) => {
-    app.log.info(`Sinal ${signal} recebido — encerrando servidor...`);
-    await app.close();
-    await pool.end();
-    process.exit(0);
-  };
-  process.on('SIGTERM', () => shutdown('SIGTERM'));
-  process.on('SIGINT',  () => shutdown('SIGINT'));
-});
+    // Graceful shutdown — fecha conexões do pool ao encerrar o processo
+    const shutdown = async (signal: string) => {
+      app.log.info(`Sinal ${signal} recebido — encerrando servidor...`);
+      await app.close();
+      await pool.end();
+      process.exit(0);
+    };
+    process.on('SIGTERM', () => shutdown('SIGTERM'));
+    process.on('SIGINT',  () => shutdown('SIGINT'));
+  })
+  .catch(err => {
+    console.error('❌ Falha crítica na inicialização:', err);
+    process.exit(1);
+  });
