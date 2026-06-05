@@ -12,8 +12,9 @@ CREATE TABLE IF NOT EXISTS sites (
   token        VARCHAR(100) NOT NULL UNIQUE,
   bot_name     VARCHAR(100) NOT NULL DEFAULT 'Assistente',
   bot_avatar_url TEXT,
-  active       BOOLEAN     NOT NULL DEFAULT true,
-  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  active            BOOLEAN      NOT NULL DEFAULT true,
+  limit_message     VARCHAR(500),
+  created_at        TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
 
 -- ── Sessões de conversa ───────────────────────────────────────────────────────

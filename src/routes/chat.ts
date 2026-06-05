@@ -119,6 +119,7 @@ export async function chatRoutes(app: FastifyInstance) {
             error: 'Limite mensal de conversas atingido.',
             limitReached: true,
             whatsappUrl: buildFallbackWhatsAppUrl(site.whatsapp_number ?? '', site.name),
+            limitMessage: site.limit_message ?? null,
           });
         }
       }

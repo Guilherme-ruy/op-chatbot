@@ -424,24 +424,40 @@ function addUnavailableMessage() {
   scrollToBottom();
 }
 
-function switchToWhatsAppMode(whatsappUrl: string | undefined) {
+function switchToWhatsAppMode(whatsappUrl: string | undefined, limitMessage?: string | null) {
   // 429 — limite mensal atingido: substitui o widget pelo botão de WhatsApp
   // ou some completamente se não houver número configurado
-  const panel  = $('chatbot-panel');
-  const bubble = $('chatbot-bubble');
-  if (panel)  panel.style.display  = 'none';
-  if (bubble) bubble.style.display = 'none';
+
+  // Fecha e esconde o painel de chat
+  const panel = $('chatbot-panel');
+  if (panel) panel.style.display = 'none';
+
+  // Reseta o estado de aberto e restaura o ícone WhatsApp (estava como X)
+  isOpen = false;
 
   const btn = $('chatbot-btn');
   if (!btn) return;
 
   if (whatsappUrl) {
-    // Transforma o botão flutuante num link direto pro WhatsApp
+    // Restaura ícone WhatsApp e transforma em link direto
+    btn.innerHTML = `<div class="chatbot-btn-ping"></div>${SVG_WA}<div class="chatbot-btn-dot"></div>`;
     btn.setAttribute('aria-label', 'Falar no WhatsApp');
     btn.onclick = (e) => {
       e.stopPropagation();
       window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
     };
+
+    // Exibe mensagem personalizada na bolha proativa (se configurada)
+    if (limitMessage) {
+      const textEl = $('chatbot-bubble-text');
+      if (textEl) textEl.textContent = limitMessage;
+      const bubble = $('chatbot-bubble');
+      if (bubble) {
+        bubble.classList.add('chatbot-show');
+        // Clique na bolha também abre WhatsApp
+        bubble.onclick = () => window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+      }
+    }
   } else {
     // Sem WhatsApp configurado — esconde tudo
     const widget = document.getElementById('chatbot-widget');
@@ -479,7 +495,7 @@ async function startSession() {
       // Limite mensal atingido — substitui o widget pelo botão de WhatsApp
       const data = await res.json().catch(() => ({}));
       setTyping(false);
-      switchToWhatsAppMode(data.whatsappUrl);
+      switchToWhatsAppMode(data.whatsappUrl, data.limitMessage);
       return;
     }
 

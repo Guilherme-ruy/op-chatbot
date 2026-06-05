@@ -30,8 +30,8 @@ export async function restoreSite(id: string): Promise<Site> {
   return data
 }
 
-export async function getSiteStats(id: string): Promise<SiteDetailStats> {
-  const { data } = await api.get<SiteDetailStats>(`/sites/${id}/stats`)
+export async function getSiteStats(id: string, days = 30): Promise<SiteDetailStats> {
+  const { data } = await api.get<SiteDetailStats>(`/sites/${id}/stats`, { params: { days } })
   return data
 }
 

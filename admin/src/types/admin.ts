@@ -8,6 +8,7 @@ export interface Site {
   whatsapp_number: string | null
   plan_name: string | null
   monthly_session_limit: number | null
+  limit_message: string | null
   active: boolean
   deleted_at: string | null
   created_at: string
@@ -18,14 +19,16 @@ export interface Site {
 
 export interface SiteDetailStats {
   site: Site
+  // Mês corrente (card "Uso mensal")
   sessions_this_month:      number
   qualified_this_month:     number
-  leads_this_month:         number
+  // Totais históricos
   total_sessions_all:       number
   total_leads_all:          number
+  // Métricas do período selecionado
+  leads_in_period:          number
   avg_messages_per_session: number
   abandonment_rate:         number
-  qualification_rate:       number
   sessions_by_day:  { date: string; sessions: number; leads: number }[]
   leads_by_project: { type: string; count: number }[]
   peak_hours:       { hour: number; count: number }[]
@@ -82,5 +85,5 @@ export interface LeadsResponse    { leads: Lead[];       total: number; page: nu
 export interface SiteFormData {
   name: string; domain: string; bot_name: string
   bot_avatar_url?: string | null; whatsapp_number?: string | null
-  monthly_session_limit?: number | null
+  monthly_session_limit?: number | null; limit_message?: string | null
 }

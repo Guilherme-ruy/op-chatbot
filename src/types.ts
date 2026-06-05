@@ -10,6 +10,7 @@ export interface Site {
   whatsapp_number: string | null;
   plan_name: string | null;
   monthly_session_limit: number | null;
+  limit_message: string | null;
   active: boolean;
   deleted_at: Date | null;
   created_at: Date;

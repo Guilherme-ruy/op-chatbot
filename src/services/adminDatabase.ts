@@ -301,16 +301,18 @@ export async function createSite(data: {
   whatsapp_number?: string | null;
   plan_name?: string | null;
   monthly_session_limit?: number | null;
+  limit_message?: string | null;
 }): Promise<Site> {
   const token = generateSiteToken();
   const { rows } = await pool.query<Site>(
-    `INSERT INTO sites (name, domain, token, bot_name, bot_avatar_url, whatsapp_number, plan_name, monthly_session_limit)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `INSERT INTO sites (name, domain, token, bot_name, bot_avatar_url, whatsapp_number, plan_name, monthly_session_limit, limit_message)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
      RETURNING *`,
     [
       data.name, data.domain, token, data.bot_name,
       data.bot_avatar_url ?? null, data.whatsapp_number ?? null,
       data.plan_name ?? null, data.monthly_session_limit ?? null,
+      data.limit_message ?? null,
     ]
   );
   return rows[0];
@@ -326,6 +328,7 @@ export async function updateSite(
     whatsapp_number: string | null;
     plan_name: string | null;
     monthly_session_limit: number | null;
+    limit_message: string | null;
     active: boolean;
   }>
 ): Promise<Site | null> {
@@ -340,6 +343,7 @@ export async function updateSite(
   if ('whatsapp_number'        in data)           { fields.push(`whatsapp_number = $${idx++}`);         values.push(data.whatsapp_number); }
   if ('plan_name'              in data)           { fields.push(`plan_name = $${idx++}`);               values.push(data.plan_name); }
   if ('monthly_session_limit'  in data)           { fields.push(`monthly_session_limit = $${idx++}`);   values.push(data.monthly_session_limit); }
+  if ('limit_message'          in data)           { fields.push(`limit_message = $${idx++}`);           values.push(data.limit_message); }
   if (data.active                  !== undefined) { fields.push(`active = $${idx++}`);                  values.push(data.active); }
 
   if (fields.length === 0) return getSiteById(id);
@@ -381,59 +385,66 @@ export async function regenerateSiteToken(id: string): Promise<string | null> {
 export interface SiteDetailStats {
   // Identidade
   site: Site;
-  // Uso mensal
+  // Uso mensal atual (sempre mês corrente — para o card "Uso mensal")
   sessions_this_month:   number;
   qualified_this_month:  number;
-  leads_this_month:      number;
-  // Acumulado total
+  // Acumulado total (sempre histórico completo — para "Totais históricos")
   total_sessions_all:    number;
   total_leads_all:       number;
-  // Métricas qualitativas
+  // Métricas do período selecionado (afetadas pelo filtro de data)
+  leads_in_period:          number;
   avg_messages_per_session: number;
-  abandonment_rate:         number;   // % de sessões abandonadas
-  qualification_rate:       number;   // % de sessões qualificadas
-  // Séries temporais (últimos 30 dias)
+  abandonment_rate:         number;   // % de sessões abandonadas no período
+  // Séries temporais do período (dia a dia ou mês a mês se "todo período")
   sessions_by_day: { date: string; sessions: number; leads: number }[];
-  // Distribuições
+  // Distribuições do período
   leads_by_project: { type: string; count: number }[];
   peak_hours:       { hour: number; count: number }[];
-  // Últimos registros
+  // Últimos leads (sempre os 5 mais recentes, independente do período)
   recent_leads: {
     id: string; name: string | null; contact: string | null;
     project_type: string | null; whatsapp_url: string | null; created_at: Date;
   }[];
 }
 
-export async function getSiteDetailStats(siteId: string): Promise<SiteDetailStats | null> {
+// days: 7 | 30 | 90 | 0 (0 = todo o período, sem filtro de data)
+export async function getSiteDetailStats(siteId: string, days = 30): Promise<SiteDetailStats | null> {
   const site = await getSiteById(siteId);
   if (!site) return null;
 
+  // Cláusula de filtro de data reutilizável (segura — days é sempre um número inteiro validado)
+  const periodJoin   = days > 0 ? `AND ss.created_at >= NOW() - INTERVAL '${days} days'` : '';
+  const periodSimple = days > 0 ? `AND created_at    >= NOW() - INTERVAL '${days} days'` : '';
+
   const [
-    monthlyRes, allTimeRes, avgMsgRes,
+    monthlyRes, allTimeRes, periodRes,
     byDayRes, byProjectRes, peakHoursRes, recentLeadsRes,
   ] = await Promise.all([
-    // Uso do mês atual
-    pool.query<{
-      sessions_this_month: number; qualified_this_month: number; leads_this_month: number;
-    }>(`
+
+    // ── Mês corrente (card "Uso mensal" — nunca filtrado por período) ──────────
+    pool.query<{ sessions_this_month: number; qualified_this_month: number }>(`
       SELECT
-        COUNT(DISTINCT ss.id)::int                                          AS sessions_this_month,
-        COUNT(DISTINCT ss.id) FILTER (WHERE ss.status = 'qualified')::int   AS qualified_this_month,
-        COUNT(DISTINCT l.id)::int                                           AS leads_this_month
+        COUNT(DISTINCT ss.id)::int                                         AS sessions_this_month,
+        COUNT(DISTINCT ss.id) FILTER (WHERE ss.status = 'qualified')::int  AS qualified_this_month
       FROM sessions ss
-      LEFT JOIN leads l ON l.session_id = ss.id
       WHERE ss.site_id = $1
         AND DATE_TRUNC('month', ss.created_at) = DATE_TRUNC('month', NOW())
     `, [siteId]),
 
-    // Totais históricos + métricas de qualidade
-    pool.query<{
-      total_sessions_all: number; total_leads_all: number;
-      avg_messages: number; abandonment_rate: number;
-    }>(`
+    // ── Totais históricos (bloco "Totais históricos" — nunca filtrado) ─────────
+    pool.query<{ total_sessions_all: number; total_leads_all: number }>(`
       SELECT
-        COUNT(DISTINCT ss.id)::int                                            AS total_sessions_all,
-        COUNT(DISTINCT l.id)::int                                             AS total_leads_all,
+        COUNT(DISTINCT ss.id)::int AS total_sessions_all,
+        COUNT(DISTINCT l.id)::int  AS total_leads_all
+      FROM sessions ss
+      LEFT JOIN leads l ON l.session_id = ss.id
+      WHERE ss.site_id = $1
+    `, [siteId]),
+
+    // ── Métricas do período selecionado (KPI cards) ───────────────────────────
+    pool.query<{ leads_in_period: number; avg_messages: number; abandonment_rate: number }>(`
+      SELECT
+        COUNT(DISTINCT l.id)::int                                             AS leads_in_period,
         ROUND(AVG(ss.message_count), 1)::float                               AS avg_messages,
         ROUND(
           100.0 * COUNT(DISTINCT ss.id) FILTER (WHERE ss.status = 'abandoned')
@@ -441,48 +452,55 @@ export async function getSiteDetailStats(siteId: string): Promise<SiteDetailStat
         )::float                                                              AS abandonment_rate
       FROM sessions ss
       LEFT JOIN leads l ON l.session_id = ss.id
-      WHERE ss.site_id = $1
+      WHERE ss.site_id = $1 ${periodJoin}
     `, [siteId]),
 
-    // Média de mensagens separada (para segurança)
-    pool.query<{ avg: number }>(`
-      SELECT ROUND(AVG(message_count), 1)::float AS avg FROM sessions WHERE site_id = $1
-    `, [siteId]),
+    // ── Gráfico de atividade — dia a dia (períodos curtos) ou mês a mês (todo período) ──
+    days > 0
+      ? pool.query<{ date: string; sessions: number; leads: number }>(`
+          SELECT
+            DATE(ss.created_at)::text    AS date,
+            COUNT(DISTINCT ss.id)::int   AS sessions,
+            COUNT(DISTINCT l.id)::int    AS leads
+          FROM sessions ss
+          LEFT JOIN leads l ON l.session_id = ss.id
+          WHERE ss.site_id = $1
+            AND ss.created_at >= NOW() - INTERVAL '${days} days'
+          GROUP BY DATE(ss.created_at)
+          ORDER BY date
+        `, [siteId])
+      : pool.query<{ date: string; sessions: number; leads: number }>(`
+          SELECT
+            TO_CHAR(DATE_TRUNC('month', ss.created_at), 'YYYY-MM') AS date,
+            COUNT(DISTINCT ss.id)::int                              AS sessions,
+            COUNT(DISTINCT l.id)::int                              AS leads
+          FROM sessions ss
+          LEFT JOIN leads l ON l.session_id = ss.id
+          WHERE ss.site_id = $1
+          GROUP BY DATE_TRUNC('month', ss.created_at)
+          ORDER BY date
+        `, [siteId]),
 
-    // Sessões e leads por dia (últimos 30 dias)
-    pool.query<{ date: string; sessions: number; leads: number }>(`
-      SELECT
-        DATE(ss.created_at)::text                        AS date,
-        COUNT(DISTINCT ss.id)::int                       AS sessions,
-        COUNT(DISTINCT l.id)::int                        AS leads
-      FROM sessions ss
-      LEFT JOIN leads l ON l.session_id = ss.id
-      WHERE ss.site_id = $1
-        AND ss.created_at >= NOW() - INTERVAL '30 days'
-      GROUP BY DATE(ss.created_at)
-      ORDER BY date
-    `, [siteId]),
-
-    // Distribuição por tipo de projeto
+    // ── Distribuição por tipo de projeto (período) ────────────────────────────
     pool.query<{ type: string; count: number }>(`
       SELECT COALESCE(l.project_type, 'não informado') AS type, COUNT(*)::int AS count
       FROM leads l
       JOIN sessions ss ON l.session_id = ss.id
-      WHERE ss.site_id = $1
+      WHERE ss.site_id = $1 ${periodJoin}
       GROUP BY l.project_type
       ORDER BY count DESC
     `, [siteId]),
 
-    // Horários de pico (hora do dia com mais sessões)
+    // ── Horários de pico (período) ────────────────────────────────────────────
     pool.query<{ hour: number; count: number }>(`
       SELECT EXTRACT(HOUR FROM created_at)::int AS hour, COUNT(*)::int AS count
       FROM sessions
-      WHERE site_id = $1 AND created_at >= NOW() - INTERVAL '30 days'
+      WHERE site_id = $1 ${periodSimple}
       GROUP BY EXTRACT(HOUR FROM created_at)
       ORDER BY hour
     `, [siteId]),
 
-    // Últimos 5 leads
+    // ── Últimos 5 leads (sempre os mais recentes, sem filtro de período) ──────
     pool.query<{
       id: string; name: string | null; contact: string | null;
       project_type: string | null; whatsapp_url: string | null; created_at: Date;
@@ -498,25 +516,20 @@ export async function getSiteDetailStats(siteId: string): Promise<SiteDetailStat
 
   const m = monthlyRes.rows[0]!;
   const a = allTimeRes.rows[0]!;
-
-  const sessionsThisMonth  = m.sessions_this_month  ?? 0;
-  const qualifiedThisMonth = m.qualified_this_month ?? 0;
+  const p = periodRes.rows[0]!;
 
   return {
     site,
-    sessions_this_month:      sessionsThisMonth,
-    qualified_this_month:     qualifiedThisMonth,
-    leads_this_month:         m.leads_this_month ?? 0,
-    total_sessions_all:       a.total_sessions_all ?? 0,
-    total_leads_all:          a.total_leads_all ?? 0,
-    avg_messages_per_session: avgMsgRes.rows[0]?.avg ?? 0,
-    abandonment_rate:         a.abandonment_rate ?? 0,
-    qualification_rate:       sessionsThisMonth > 0
-      ? Math.round((qualifiedThisMonth / sessionsThisMonth) * 100)
-      : 0,
-    sessions_by_day:  byDayRes.rows,
-    leads_by_project: byProjectRes.rows,
-    peak_hours:       peakHoursRes.rows,
-    recent_leads:     recentLeadsRes.rows,
+    sessions_this_month:      m.sessions_this_month  ?? 0,
+    qualified_this_month:     m.qualified_this_month ?? 0,
+    leads_in_period:          p.leads_in_period       ?? 0,
+    total_sessions_all:       a.total_sessions_all    ?? 0,
+    total_leads_all:          a.total_leads_all       ?? 0,
+    avg_messages_per_session: p.avg_messages          ?? 0,
+    abandonment_rate:         p.abandonment_rate      ?? 0,
+    sessions_by_day:          byDayRes.rows,
+    leads_by_project:         byProjectRes.rows,
+    peak_hours:               peakHoursRes.rows,
+    recent_leads:             recentLeadsRes.rows,
   };
 }

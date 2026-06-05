@@ -52,6 +52,7 @@ export async function adminSitesRoutes(app: FastifyInstance) {
       whatsapp_number?: string | null;
       plan_name?: string | null;
       monthly_session_limit?: number | null;
+      limit_message?: string | null;
     };
     try {
       const site = await createSite(body);
@@ -69,7 +70,7 @@ export async function adminSitesRoutes(app: FastifyInstance) {
     const { id } = request.params as { id: string };
     const body = request.body as Record<string, unknown>;
 
-    const allowed = ['name', 'domain', 'bot_name', 'bot_avatar_url', 'whatsapp_number', 'plan_name', 'monthly_session_limit', 'active'];
+    const allowed = ['name', 'domain', 'bot_name', 'bot_avatar_url', 'whatsapp_number', 'plan_name', 'monthly_session_limit', 'limit_message', 'active'];
     const data: Record<string, unknown> = {};
     for (const key of allowed) {
       if (key in body) data[key] = body[key];
@@ -114,10 +115,14 @@ export async function adminSitesRoutes(app: FastifyInstance) {
     return reply.send({ token });
   });
 
-  // GET /api/admin/sites/:id/stats — visão detalhada por site
+  // GET /api/admin/sites/:id/stats?days=30 — visão detalhada por site
+  // days: 7 | 30 | 90 | 0 (0 = todo o período). Padrão: 30.
   app.get('/api/admin/sites/:id/stats', auth, async (request, reply) => {
-    const { id } = request.params as { id: string };
-    const stats = await getSiteDetailStats(id);
+    const { id }   = request.params as { id: string };
+    const { days } = request.query  as { days?: string };
+    const validDays = [0, 7, 30, 90];
+    const daysNum = validDays.includes(Number(days)) ? Number(days) : 30;
+    const stats = await getSiteDetailStats(id, daysNum);
     if (!stats) return reply.code(404).send({ error: 'Site não encontrado.' });
     return reply.send(stats);
   });

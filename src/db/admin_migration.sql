@@ -22,6 +22,9 @@ ALTER TABLE sites ADD COLUMN IF NOT EXISTS whatsapp_number VARCHAR(20);
 ALTER TABLE sites ADD COLUMN IF NOT EXISTS plan_name VARCHAR(50);
 ALTER TABLE sites ADD COLUMN IF NOT EXISTS monthly_session_limit INT;
 
+-- Mensagem personalizada exibida no widget quando o limite mensal é atingido
+ALTER TABLE sites ADD COLUMN IF NOT EXISTS limit_message VARCHAR(500);
+
 -- Índice para contagem rápida de sessões mensais por site
 CREATE INDEX IF NOT EXISTS idx_sessions_site_month
   ON sessions(site_id, created_at);

@@ -9,28 +9,36 @@ import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ArrowLeft, RefreshCw, Users, TrendingUp, MessageSquare, AlertTriangle, Infinity, Copy, Check, ExternalLink, Info } from 'lucide-react'
+import { ArrowLeft, RefreshCw, Users, MessageSquare, AlertTriangle, Infinity, Copy, Check, ExternalLink, Info } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 
 const PROJECT_LABELS: Record<string, string> = { site: 'Site', sistema: 'Sistema', hospedagem: 'Hospedagem', outro: 'Outro' }
 
-export default function SiteDetailPage() {
-  const { id }    = useParams<{ id: string }>()
-  const navigate  = useNavigate()
-  const [stats,   setStats]   = useState<SiteDetailStats | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error,   setError]   = useState<string | null>(null)
-  const [copied,  setCopied]  = useState(false)
+const PERIODS = [
+  { label: '7 dias',       days: 7  },
+  { label: '30 dias',      days: 30 },
+  { label: '90 dias',      days: 90 },
+  { label: 'Todo período', days: 0  },
+]
 
-  async function fetchStats() {
+export default function SiteDetailPage() {
+  const { id }      = useParams<{ id: string }>()
+  const navigate    = useNavigate()
+  const [stats,     setStats]   = useState<SiteDetailStats | null>(null)
+  const [loading,   setLoading] = useState(true)
+  const [error,     setError]   = useState<string | null>(null)
+  const [copied,    setCopied]  = useState(false)
+  const [period,    setPeriod]  = useState(30)
+
+  async function fetchStats(days = period) {
     if (!id) return
     setLoading(true); setError(null)
-    try   { setStats(await getSiteStats(id)) }
+    try   { setStats(await getSiteStats(id, days)) }
     catch (e: any) { setError(e?.response?.data?.error ?? 'Erro ao carregar dados do site.') }
     finally { setLoading(false) }
   }
 
-  useEffect(() => { fetchStats() }, [id])
+  useEffect(() => { fetchStats(period) }, [id, period])
 
   const usagePercent = useMemo(() => {
     if (!stats?.site.monthly_session_limit) return 0
@@ -46,8 +54,16 @@ export default function SiteDetailPage() {
 
   const barData = useMemo(() => {
     if (!stats) return []
+    // "Todo período" — backend retorna agrupado por mês (YYYY-MM), sem preenchimento de lacunas
+    if (period === 0) {
+      return stats.sessions_by_day.map(d => {
+        const [year, month] = d.date.split('-')
+        return { label: `${month}/${year?.slice(2)}`, sessions: d.sessions, leads: d.leads }
+      })
+    }
+    // Períodos curtos — preenche dias sem dados com zero
     const filled: Record<string, { sessions: number; leads: number }> = {}
-    for (let i = 29; i >= 0; i--) {
+    for (let i = period - 1; i >= 0; i--) {
       const d = new Date(); d.setDate(d.getDate() - i)
       filled[d.toISOString().slice(0, 10)] = { sessions: 0, leads: 0 }
     }
@@ -56,7 +72,7 @@ export default function SiteDetailPage() {
       const [, m, day] = date.split('-')
       return { label: `${day}/${m}`, ...v }
     })
-  }, [stats])
+  }, [stats, period])
 
   const peakData = useMemo(() => {
     if (!stats) return []
@@ -83,9 +99,26 @@ export default function SiteDetailPage() {
           <h1 className="text-xl font-bold truncate">{stats?.site.name ?? 'Carregando...'}</h1>
           <p className="text-sm text-muted-foreground">{stats?.site.domain}</p>
         </div>
-        <Button variant="outline" size="sm" onClick={fetchStats} disabled={loading}>
+        <Button variant="outline" size="sm" onClick={() => fetchStats(period)} disabled={loading}>
           <RefreshCw size={13} className={loading ? 'animate-spin' : ''} /> Atualizar
         </Button>
+      </div>
+
+      {/* Seletor de período */}
+      <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1 w-fit">
+        {PERIODS.map(p => (
+          <button
+            key={p.days}
+            onClick={() => setPeriod(p.days)}
+            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+              period === p.days
+                ? 'bg-white text-slate-900 shadow-sm'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            {p.label}
+          </button>
+        ))}
       </div>
 
       {error && <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>}
@@ -115,16 +148,6 @@ export default function SiteDetailPage() {
                 <>
                   <Progress value={usagePercent} className="h-3" indicatorClassName={usageColor} />
                   <p className="text-xs text-muted-foreground mt-2">{usagePercent}% utilizado</p>
-                  {usagePercent >= 75 && (
-                    <Alert variant={usagePercent >= 90 ? 'destructive' : 'warning'} className="mt-3">
-                      <AlertTriangle size={14} />
-                      <AlertDescription>
-                        {usagePercent >= 90
-                          ? `⚠️ Limite quase esgotado (${usagePercent}%). Considere aumentar o plano.`
-                          : `Atenção: ${usagePercent}% do limite mensal utilizado.`}
-                      </AlertDescription>
-                    </Alert>
-                  )}
                   <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1.5">
                     <Info size={11} className="flex-shrink-0 opacity-60" />
                     Ao atingir o limite, o widget é substituído automaticamente por um botão de WhatsApp no site.
@@ -138,13 +161,12 @@ export default function SiteDetailPage() {
             </CardContent>
           </Card>
 
-          {/* KPIs do mês */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* KPIs do período */}
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
             {[
-              { label: 'Leads este mês',        value: stats.leads_this_month,          icon: Users,          color: 'text-green-600',  bg: 'bg-green-50'  },
-              { label: 'Taxa de qualificação',  value: `${stats.qualification_rate}%`,  icon: TrendingUp,     color: 'text-blue-600',   bg: 'bg-blue-50'   },
-              { label: 'Média msgs/conversa',   value: stats.avg_messages_per_session,  icon: MessageSquare,  color: 'text-purple-600', bg: 'bg-purple-50' },
-              { label: 'Taxa de abandono',      value: `${stats.abandonment_rate}%`,    icon: AlertTriangle,  color: 'text-amber-600',  bg: 'bg-amber-50'  },
+              { label: 'Leads no período',         value: stats.leads_in_period,           icon: Users,          color: 'text-green-600',  bg: 'bg-green-50'  },
+              { label: 'Média msgs/conversa',      value: stats.avg_messages_per_session,  icon: MessageSquare,  color: 'text-purple-600', bg: 'bg-purple-50' },
+              { label: 'Saíram sem finalizar',     value: `${stats.abandonment_rate}%`,    icon: AlertTriangle,  color: 'text-amber-600',  bg: 'bg-amber-50'  },
             ].map(kpi => (
               <Card key={kpi.label} className="border-0 shadow-sm">
                 <CardContent className="p-4">
@@ -182,7 +204,7 @@ export default function SiteDetailPage() {
 
           {/* Atividade */}
           <Card className="border-0 shadow-sm">
-            <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold">Atividade — últimos 30 dias</CardTitle></CardHeader>
+            <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold">Atividade — {period === 0 ? 'todo o período' : `últimos ${period} dias`}</CardTitle></CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={barData} margin={{ left: -20, right: 0, top: 0, bottom: 0 }}>
@@ -210,7 +232,7 @@ export default function SiteDetailPage() {
                     <div className="flex-1 bg-slate-100 rounded-full h-2 overflow-hidden">
                       <div
                         className="h-full bg-green-500 rounded-full"
-                        style={{ width: `${stats.leads_this_month > 0 ? (p.count / stats.leads_this_month) * 100 : 0}%` }}
+                        style={{ width: `${stats.leads_in_period > 0 ? (p.count / stats.leads_in_period) * 100 : 0}%` }}
                       />
                     </div>
                     <span className="text-sm font-bold w-6 text-right">{p.count}</span>

@@ -30,6 +30,7 @@ const schema = z.object({
     },
     z.number().int().min(1).nullable().optional()
   ),
+  limit_message: z.string().max(500).nullable().optional(),
 })
 
 type FormValues = z.infer<typeof schema>
@@ -55,7 +56,8 @@ export default function ClientFormDialog({ open, onOpenChange, site, saving, onS
         name: site.name, domain: site.domain, bot_name: site.bot_name,
         bot_avatar_url: site.bot_avatar_url, whatsapp_number: site.whatsapp_number ?? '',
         monthly_session_limit: site.monthly_session_limit,
-      } : { name: '', domain: '', bot_name: '', bot_avatar_url: '', whatsapp_number: '', monthly_session_limit: undefined })
+        limit_message: site.limit_message,
+      } : { name: '', domain: '', bot_name: '', bot_avatar_url: '', whatsapp_number: '', monthly_session_limit: undefined, limit_message: undefined })
     }
   }, [open, site, reset])
 
@@ -115,6 +117,15 @@ export default function ClientFormDialog({ open, onOpenChange, site, saving, onS
                 />
               </Field>
             </div>
+
+            <Field label="Mensagem ao atingir o limite (opcional)" error={errors.limit_message?.message}>
+              <Input
+                {...register('limit_message')}
+                placeholder="Ex: Olá! No momento não conseguimos atender. Fale conosco pelo WhatsApp!"
+                maxLength={500}
+              />
+              <p className="text-xs text-muted-foreground mt-1">Aparece na bolha do widget quando o limite mensal é atingido.</p>
+            </Field>
           </div>
 
           <DialogFooter className="flex-none border-t px-6 py-4 bg-background">
