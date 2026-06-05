@@ -82,6 +82,21 @@ Com o servidor rodando (`npm run dev`), há duas formas de testar o widget:
 
 ---
 
+## Segurança — Token + Domínio
+
+Cada cliente tem um token único gerado pelo painel admin. Esse token **só funciona quando o widget é carregado a partir do domínio cadastrado para ele** — subdomínios também são aceitos.
+
+Ou seja: mesmo que alguém inspecione o HTML de um site e copie o token, não consegue usar em outro domínio. Qualquer tentativa de origem diferente é bloqueada com erro `403`.
+
+```
+Token cadastrado para: clinicasilva.com.br
+Carregado em clinicasilva.com.br     → ✅ funciona
+Carregado em www.clinicasilva.com.br → ✅ funciona (subdomínio)
+Carregado em outrosite.com.br        → ❌ bloqueado
+```
+
+---
+
 ## Instalação do widget
 
 Cole antes de `</body>` no site do cliente:
