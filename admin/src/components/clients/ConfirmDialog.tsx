@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { AlertTriangle } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -23,8 +23,13 @@ export default function ConfirmDialog({
   const [input, setInput] = useState('')
   const confirmed = input.trim().toLowerCase() === 'sim'
 
+  // Limpa o campo sempre que o dialog fechar, independente do estado de loading
+  useEffect(() => {
+    if (!open) setInput('')
+  }, [open])
+
   function handleOpenChange(v: boolean) {
-    if (!loading) { setInput(''); onOpenChange(v) }
+    if (!loading) onOpenChange(v)
   }
 
   return (
