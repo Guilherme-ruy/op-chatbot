@@ -394,6 +394,24 @@ function addMessage(content: string, role: 'bot' | 'user') {
   scrollToBottom();
 }
 
+function addConfigErrorMessage() {
+  const msgs   = $('chatbot-messages');
+  const typing = $('chatbot-typing');
+  const div    = document.createElement('div');
+  div.className = 'chatbot-msg chatbot-msg-bot';
+  div.appendChild(document.createTextNode('Chatbot não configurado para este domínio. Saiba mais em: '));
+  const link = document.createElement('a');
+  link.href    = 'https://github.com/Guilherme-ruy/op-chatbot';
+  link.textContent = 'github.com/Guilherme-ruy/op-chatbot';
+  link.target  = '_blank';
+  link.rel     = 'noopener noreferrer';
+  link.style.color          = '#25D366';
+  link.style.textDecoration = 'underline';
+  div.appendChild(link);
+  msgs.insertBefore(div, typing);
+  scrollToBottom();
+}
+
 function setInputEnabled(enabled: boolean) {
   ($('chatbot-input') as HTMLInputElement).disabled  = !enabled;
   ($('chatbot-send')  as HTMLButtonElement).disabled = !enabled;
@@ -433,6 +451,13 @@ async function startSession() {
       return;
     }
 
+    if (res.status === 401 || res.status === 403) {
+      // Token inválido ou domínio não cadastrado — erro de configuração
+      setTyping(false);
+      addConfigErrorMessage();
+      return;
+    }
+
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
     const data = await res.json();
@@ -448,7 +473,7 @@ async function startSession() {
     ($('chatbot-input') as HTMLInputElement).focus();
   } catch {
     setTyping(false);
-    addMessage('Ops! Houve um problema de conexão. Tente novamente em instantes.', 'bot');
+    addMessage('Ops! Algo deu errado por aqui. Tente novamente em breve.', 'bot');
   }
 }
 
