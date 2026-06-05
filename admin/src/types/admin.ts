@@ -82,5 +82,5 @@ export interface LeadsResponse    { leads: Lead[];       total: number; page: nu
 export interface SiteFormData {
   name: string; domain: string; bot_name: string
   bot_avatar_url?: string | null; whatsapp_number?: string | null
-  plan_name?: string | null; monthly_session_limit?: number | null
+  monthly_session_limit?: number | null
 }

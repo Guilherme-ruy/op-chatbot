@@ -42,12 +42,11 @@ Campos obrigatórios:
 - Nome do cliente
 - Domínio (ex: `clinicasilva.com.br`) — **usado para validação de segurança**: o widget só funciona quando carregado a partir deste domínio exato (ou subdomínios). Para testes locais, use `localhost:3001`.
 - Nome do bot
-- Número do WhatsApp (formato: `5511999990000`)
+- Número do WhatsApp (formato: `5511999990000` — país + DDD + número)
 
 Campos opcionais:
 - URL do avatar do bot
-- Nome do plano (ex: Básico, Pro)
-- Limite mensal de conversas (`0` / vazio = ilimitado)
+- Limite mensal de conversas (`0` ou vazio = ilimitado)
 
 O token é gerado automaticamente.
 

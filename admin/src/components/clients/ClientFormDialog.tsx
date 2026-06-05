@@ -6,11 +6,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Separator } from '@/components/ui/separator'
 import type { Site, SiteFormData } from '@/types/admin'
 
 const schema = z.object({
-  name:                  z.string().min(1, 'Obrigatório'),
+  name:           z.string().min(1, 'Obrigatório'),
   domain: z.string().min(1, 'Obrigatório')
     .transform(v => v.replace(/^https?:\/\//, '').replace(/\/$/, '').trim())
     .refine(
@@ -20,12 +19,15 @@ const schema = z.object({
         /^([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}(:\d+)?$/.test(v),
       'Domínio inválido (ex: clinicasilva.com.br ou localhost:3001)'
     ),
-  bot_name:              z.string().min(1, 'Obrigatório'),
-  bot_avatar_url:        z.string().nullable().optional(),
-  whatsapp_number:       z.string().regex(/^\d{10,15}$/, 'Apenas dígitos, 10–15 chars (ex: 5511999990000)'),
-  plan_name:             z.string().nullable().optional(),
+  bot_name:       z.string().min(1, 'Obrigatório'),
+  bot_avatar_url: z.string().nullable().optional(),
+  whatsapp_number: z.string().regex(/^\d{10,15}$/, 'Apenas dígitos, 10–15 chars'),
   monthly_session_limit: z.preprocess(
-    v => (v === '' || v === null || v === undefined ? null : Number(v)),
+    v => {
+      if (v === '' || v === null || v === undefined) return null;
+      const n = Number(v);
+      return isNaN(n) || n === 0 ? null : n; // 0 = ilimitado
+    },
     z.number().int().min(1).nullable().optional()
   ),
 })
@@ -52,13 +54,18 @@ export default function ClientFormDialog({ open, onOpenChange, site, saving, onS
       reset(site ? {
         name: site.name, domain: site.domain, bot_name: site.bot_name,
         bot_avatar_url: site.bot_avatar_url, whatsapp_number: site.whatsapp_number ?? '',
-        plan_name: site.plan_name, monthly_session_limit: site.monthly_session_limit,
-      } : { name: '', domain: '', bot_name: '', bot_avatar_url: '', whatsapp_number: '', plan_name: '', monthly_session_limit: undefined })
+        monthly_session_limit: site.monthly_session_limit,
+      } : { name: '', domain: '', bot_name: '', bot_avatar_url: '', whatsapp_number: '', monthly_session_limit: undefined })
     }
   }, [open, site, reset])
 
   function onSubmit(data: FormValues) {
     onSave(data as SiteFormData)
+  }
+
+  // Permite apenas dígitos no campo
+  function onlyDigits(e: React.FormEvent<HTMLInputElement>) {
+    e.currentTarget.value = e.currentTarget.value.replace(/\D/g, '')
   }
 
   return (
@@ -85,20 +92,27 @@ export default function ClientFormDialog({ open, onOpenChange, site, saving, onS
             <Field label="URL do avatar (opcional)" error={errors.bot_avatar_url?.message}>
               <Input {...register('bot_avatar_url')} placeholder="https://..." />
             </Field>
-            <Field label="WhatsApp *" error={errors.whatsapp_number?.message}>
-              <Input {...register('whatsapp_number')} placeholder="Ex: 5511999990000" />
-              <p className="text-xs text-muted-foreground mt-1">Código do país + DDD + número, sem espaços</p>
-            </Field>
-
-            <Separator />
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Plano e Limites</p>
 
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Nome do plano" error={errors.plan_name?.message}>
-                <Input {...register('plan_name')} placeholder="Ex: Básico, Pro" />
+              <Field label="WhatsApp *" error={errors.whatsapp_number?.message}>
+                <Input
+                  {...register('whatsapp_number')}
+                  type="tel"
+                  inputMode="numeric"
+                  placeholder="5511999990000"
+                  onInput={onlyDigits}
+                />
+                <p className="text-xs text-muted-foreground mt-1">País + DDD + número (ex: 5511999990000)</p>
               </Field>
-              <Field label="Limite mensal" error={errors.monthly_session_limit?.message}>
-                <Input {...register('monthly_session_limit')} type="number" min={1} placeholder="Vazio = ilimitado" />
+              <Field label="Limite mensal de conversas" error={errors.monthly_session_limit?.message}>
+                <Input
+                  {...register('monthly_session_limit')}
+                  type="number"
+                  min={0}
+                  inputMode="numeric"
+                  placeholder="0 = ilimitado"
+                  onInput={onlyDigits}
+                />
               </Field>
             </div>
           </div>

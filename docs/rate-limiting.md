@@ -38,7 +38,8 @@ Ao iniciar uma nova conversa (`POST /api/chat/start`):
 4. Caso contrário → cria a sessão normalmente
 
 ```
-site.monthly_session_limit = NULL  →  sem limite (plano ilimitado)
+site.monthly_session_limit = NULL  →  sem limite (ilimitado)
+site.monthly_session_limit = 0     →  sem limite (ilimitado)
 site.monthly_session_limit = 100   →  máximo 100 conversas/mês
 ```
 

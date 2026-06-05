@@ -105,7 +105,8 @@ export async function chatRoutes(app: FastifyInstance) {
       }
 
       // 3. Verifica limite mensal de conversas do site (se configurado)
-      if (site.monthly_session_limit !== null) {
+      // monthly_session_limit null ou 0 = ilimitado
+      if (site.monthly_session_limit !== null && site.monthly_session_limit > 0) {
         const usedThisMonth = await db.countMonthlySessionsForSite(site.id);
         if (usedThisMonth >= site.monthly_session_limit) {
           return reply.status(429).send({

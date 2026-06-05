@@ -104,7 +104,6 @@ export default function SiteDetailPage() {
                   <p className="font-semibold">Uso mensal</p>
                   <p className="text-sm text-muted-foreground">
                     Renova em {renewalDate}
-                    {stats.site.plan_name && <Badge variant="secondary" className="ml-2">{stats.site.plan_name}</Badge>}
                   </p>
                 </div>
                 <div className="text-right">
