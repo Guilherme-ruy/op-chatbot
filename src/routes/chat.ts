@@ -90,17 +90,18 @@ export async function chatRoutes(app: FastifyInstance) {
         return reply.status(401).send({ error: 'Token inválido.' });
       }
 
-      // 2. Valida Origin
+      // 2. Valida Origin contra o domínio registrado para este token
+      // O request deve vir exatamente do domínio cadastrado no painel admin
+      // para este token. Subdomínios também são aceitos (ex: www.meusite.com.br).
+      // Para testes locais, cadastre localhost ou localhost:3001 como domínio no admin.
       const origin = request.headers.origin ?? '';
       const originHost = origin.replace(/^https?:\/\//, '').replace(/\/$/, '');
-      const isAllowed =
-        config.isDev ||
-        config.allowedOrigins.some(
-          allowed => originHost === allowed || originHost.endsWith(`.${allowed}`)
-        );
+      const domainMatch =
+        originHost === site.domain ||
+        originHost.endsWith(`.${site.domain}`);
 
-      if (!isAllowed) {
-        return reply.status(403).send({ error: 'Origem não autorizada.' });
+      if (!domainMatch) {
+        return reply.status(403).send({ error: 'Origem não autorizada para este token.' });
       }
 
       // 3. Verifica limite mensal de conversas do site (se configurado)

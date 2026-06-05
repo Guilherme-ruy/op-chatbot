@@ -74,21 +74,11 @@ Acesse o painel em `http://localhost:5173/admin/` e a API em `http://localhost:3
 
 Com o servidor rodando (`npm run dev`), há duas formas de testar o widget:
 
-**Opção 1 — pelo painel admin (recomendada)**
+1. Acesse `http://localhost:5173/admin/` e crie um cliente com domínio `localhost:3001`
+2. Copie o token gerado e cole em `examples/test-site.html` no lugar de `SEU_TOKEN_AQUI`
+3. Acesse `http://localhost:3001/test.html`
 
-1. Acesse `http://localhost:5173/admin/` e crie um cliente com domínio `localhost`
-2. Copie o token gerado
-3. Abra `http://localhost:3001/test.html` no navegador — página de teste já servida pelo backend
-
-**Opção 2 — via `db:migrate` (atalho para token rápido)**
-
-```bash
-npm run db:migrate   # gera e imprime um token de exemplo no terminal
-```
-
-Copie o token impresso, cole em `examples/test-site.html` no lugar de `SEU_TOKEN_AQUI` e abra o arquivo diretamente no navegador.
-
-> O arquivo `examples/test-site.html` está incluído no repositório como ponto de partida. O `public/test.html` (gitignored) é uma cópia local já configurada, servida em `http://localhost:3001/test.html`.
+> O domínio cadastrado no admin é validado a cada requisição — o widget só funciona quando carregado a partir desse domínio exato. Por isso use `localhost:3001` para testes locais.
 
 ---
 

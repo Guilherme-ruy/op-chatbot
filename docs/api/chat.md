@@ -32,7 +32,7 @@ Inicia uma nova sessão de conversa.
 | Status | Motivo |
 |---|---|
 | `401` | Token inválido ou site inativo |
-| `403` | Origin não autorizado (domínio não cadastrado) |
+| `403` | Origin não bate com o domínio cadastrado para este token (para testes locais, cadastre `localhost:3001` como domínio no admin) |
 | `429` | Limite mensal de conversas atingido |
 
 **Response 429 (limite atingido):**

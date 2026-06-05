@@ -40,7 +40,7 @@ Lista todos os sites ativos com estatísticas acumuladas (sessões totais, leads
 
 Campos obrigatórios:
 - Nome do cliente
-- Domínio (ex: `clinicasilva.com.br`)
+- Domínio (ex: `clinicasilva.com.br`) — **usado para validação de segurança**: o widget só funciona quando carregado a partir deste domínio exato (ou subdomínios). Para testes locais, use `localhost:3001`.
 - Nome do bot
 - Número do WhatsApp (formato: `5511999990000`)
 
