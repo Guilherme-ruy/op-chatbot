@@ -90,7 +90,13 @@ export async function chatRoutes(app: FastifyInstance) {
         return reply.status(401).send({ error: 'Token inválido.' });
       }
 
-      // 2. Valida Origin contra o domínio registrado para este token
+      // 2. Verifica se o site está ativo
+      // (separado do lookup para distinguir "token inexistente" de "site desativado")
+      if (!site.active) {
+        return reply.status(503).send({ error: 'Chatbot temporariamente indisponível.' });
+      }
+
+      // 3. Valida Origin contra o domínio registrado para este token
       // O request deve vir exatamente do domínio cadastrado no painel admin
       // para este token. Subdomínios também são aceitos (ex: www.meusite.com.br).
       // Para testes locais, cadastre localhost ou localhost:3001 como domínio no admin.
@@ -104,7 +110,7 @@ export async function chatRoutes(app: FastifyInstance) {
         return reply.status(403).send({ error: 'Origem não autorizada para este token.' });
       }
 
-      // 3. Verifica limite mensal de conversas do site (se configurado)
+      // 4. Verifica limite mensal de conversas do site (se configurado)
       // monthly_session_limit null ou 0 = ilimitado
       if (site.monthly_session_limit !== null && site.monthly_session_limit > 0) {
         const usedThisMonth = await db.countMonthlySessionsForSite(site.id);
@@ -117,10 +123,10 @@ export async function chatRoutes(app: FastifyInstance) {
         }
       }
 
-      // 4. Cria sessão
+      // 5. Cria sessão
       const session = await db.createSession(site.id);
 
-      // 5. Salva mensagem de boas-vindas no histórico (variação aleatória, sem custo de LLM)
+      // 6. Salva mensagem de boas-vindas no histórico (variação aleatória, sem custo de LLM)
       const welcome = randomWelcome();
       await db.saveMessage(session.id, 'bot', welcome);
 

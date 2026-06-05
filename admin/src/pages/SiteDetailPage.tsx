@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ArrowLeft, RefreshCw, Users, TrendingUp, MessageSquare, AlertTriangle, Infinity, Copy, Check, ExternalLink } from 'lucide-react'
+import { ArrowLeft, RefreshCw, Users, TrendingUp, MessageSquare, AlertTriangle, Infinity, Copy, Check, ExternalLink, Info } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 
 const PROJECT_LABELS: Record<string, string> = { site: 'Site', sistema: 'Sistema', hospedagem: 'Hospedagem', outro: 'Outro' }
@@ -125,6 +125,10 @@ export default function SiteDetailPage() {
                       </AlertDescription>
                     </Alert>
                   )}
+                  <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1.5">
+                    <Info size={11} className="flex-shrink-0 opacity-60" />
+                    Ao atingir o limite, o widget é substituído automaticamente por um botão de WhatsApp no site.
+                  </p>
                 </>
               ) : (
                 <div className="flex items-center gap-2 text-green-600 text-sm">

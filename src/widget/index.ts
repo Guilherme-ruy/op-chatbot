@@ -395,6 +395,7 @@ function addMessage(content: string, role: 'bot' | 'user') {
 }
 
 function addConfigErrorMessage() {
+  // 401 (token inválido) ou 403 (domínio não autorizado) — erro de configuração
   const msgs   = $('chatbot-messages');
   const typing = $('chatbot-typing');
   const div    = document.createElement('div');
@@ -410,6 +411,42 @@ function addConfigErrorMessage() {
   div.appendChild(link);
   msgs.insertBefore(div, typing);
   scrollToBottom();
+}
+
+function addUnavailableMessage() {
+  // 503 — site desativado pelo admin: mensagem neutra para o visitante
+  const msgs   = $('chatbot-messages');
+  const typing = $('chatbot-typing');
+  const div    = document.createElement('div');
+  div.className  = 'chatbot-msg chatbot-msg-bot';
+  div.textContent = 'Este atendimento está temporariamente indisponível. Tente novamente mais tarde.';
+  msgs.insertBefore(div, typing);
+  scrollToBottom();
+}
+
+function switchToWhatsAppMode(whatsappUrl: string | undefined) {
+  // 429 — limite mensal atingido: substitui o widget pelo botão de WhatsApp
+  // ou some completamente se não houver número configurado
+  const panel  = $('chatbot-panel');
+  const bubble = $('chatbot-bubble');
+  if (panel)  panel.style.display  = 'none';
+  if (bubble) bubble.style.display = 'none';
+
+  const btn = $('chatbot-btn');
+  if (!btn) return;
+
+  if (whatsappUrl) {
+    // Transforma o botão flutuante num link direto pro WhatsApp
+    btn.setAttribute('aria-label', 'Falar no WhatsApp');
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+    };
+  } else {
+    // Sem WhatsApp configurado — esconde tudo
+    const widget = document.getElementById('chatbot-widget');
+    if (widget) widget.style.display = 'none';
+  }
 }
 
 function setInputEnabled(enabled: boolean) {
@@ -439,15 +476,10 @@ async function startSession() {
     });
 
     if (res.status === 429) {
-      // Limite mensal de conversas atingido pelo site
+      // Limite mensal atingido — substitui o widget pelo botão de WhatsApp
       const data = await res.json().catch(() => ({}));
       setTyping(false);
-      addMessage(
-        'No momento este serviço atingiu o limite de atendimentos. ' +
-        'Por favor, entre em contato diretamente com nossa equipe. 😊',
-        'bot'
-      );
-      if (data.whatsappUrl) showQualified(data.whatsappUrl);
+      switchToWhatsAppMode(data.whatsappUrl);
       return;
     }
 
@@ -455,6 +487,13 @@ async function startSession() {
       // Token inválido ou domínio não cadastrado — erro de configuração
       setTyping(false);
       addConfigErrorMessage();
+      return;
+    }
+
+    if (res.status === 503) {
+      // Site desativado pelo admin — mensagem neutra para o visitante
+      setTyping(false);
+      addUnavailableMessage();
       return;
     }
 

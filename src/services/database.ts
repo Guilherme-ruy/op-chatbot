@@ -5,7 +5,7 @@ import { pool } from '../db/pool';
 
 export async function getSiteByToken(token: string): Promise<Site | null> {
   const { rows } = await pool.query<Site>(
-    'SELECT * FROM sites WHERE token = $1 AND active = true LIMIT 1',
+    'SELECT * FROM sites WHERE token = $1 AND deleted_at IS NULL LIMIT 1',
     [token]
   );
   return rows[0] ?? null;
