@@ -43,9 +43,10 @@ export default function ClientsPage() {
   const [confirmConfig,  setConfirmConfig]  = useState({ title: '', message: '', label: '', color: 'error' as 'error' | 'success', action: async () => {} })
 
   // Token dialog
-  const [tokenDialog, setTokenDialog] = useState(false)
-  const [newToken,    setNewToken]    = useState<string | null>(null)
-  const [tokenCopied, setTokenCopied] = useState(false)
+  const [tokenDialog,    setTokenDialog]    = useState(false)
+  const [tokenDialogNew, setTokenDialogNew] = useState(false) // true = criação, false = regeneração
+  const [newToken,       setNewToken]       = useState<string | null>(null)
+  const [tokenCopied,    setTokenCopied]    = useState(false)
 
   useEffect(() => { fetchSites() }, [])
 
@@ -55,8 +56,15 @@ export default function ClientsPage() {
   async function handleSave(form: SiteFormData) {
     setFormSaving(true)
     try {
-      if (editingSite) { await update(editingSite.id, form); toast.success('Site atualizado.') }
-      else             { await create(form);                 toast.success('Site criado.') }
+      if (editingSite) {
+        await update(editingSite.id, form)
+        toast.success('Site atualizado.')
+      } else {
+        const site = await create(form)
+        setNewToken(site.token)
+        setTokenDialogNew(true)
+        setTokenDialog(true)
+      }
       setFormOpen(false)
     } catch (e: any) { toast.error(e?.response?.data?.error ?? 'Erro ao salvar.') }
     finally { setFormSaving(false) }
@@ -94,11 +102,20 @@ export default function ClientsPage() {
     finally { setConfirmLoading(false) }
   }
 
-  async function handleRegenerateToken(site: Site) {
-    setActionLoading(site.id)
-    try { setNewToken(await regenerateToken(site.id)); setTokenDialog(true) }
-    catch { toast.error('Erro ao regenerar token.') }
-    finally { setActionLoading(null) }
+  function handleRegenerateToken(site: Site) {
+    setConfirmConfig({
+      title: 'Regenerar token',
+      color: 'error',
+      label: 'Regenerar',
+      message: `O token atual de "${site.name}" será invalidado na hora. Lembre-se de atualizar o script no site.`,
+      action: async () => {
+        const token = await regenerateToken(site.id)
+        setNewToken(token)
+        setTokenDialogNew(false)
+        setTokenDialog(true)
+      },
+    })
+    setConfirmOpen(true)
   }
 
   function toggleDeleted() {
@@ -107,7 +124,12 @@ export default function ClientsPage() {
   }
 
   function copyToken() {
-    if (newToken) { navigator.clipboard.writeText(newToken); setTokenCopied(true); setTimeout(() => setTokenCopied(false), 2000) }
+    if (newToken) {
+      const snippet = `<script\n  src="${window.location.origin}/widget.js"\n  data-token="${newToken}"\n  defer\n></script>`
+      navigator.clipboard.writeText(snippet)
+      setTokenCopied(true)
+      setTimeout(() => setTokenCopied(false), 2000)
+    }
   }
 
   return (
@@ -261,15 +283,24 @@ export default function ClientsPage() {
       <Dialog open={tokenDialog} onOpenChange={v => { setTokenDialog(v); if (!v) setTokenCopied(false) }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Novo token gerado</DialogTitle>
+            <DialogTitle>{tokenDialogNew ? 'Site criado com sucesso!' : 'Novo token gerado'}</DialogTitle>
             <DialogDescription>
-              Copie o token abaixo e atualize o snippet do site do cliente. <strong>Este token não será exibido novamente.</strong>
+              {tokenDialogNew
+                ? <>Cole o script abaixo no site antes do <code className="text-xs bg-slate-100 px-1 rounded">&lt;/body&gt;</code>:</>
+                : <>Token anterior <strong>já não funciona</strong>. Atualize o script no site:</>
+              }
             </DialogDescription>
           </DialogHeader>
-          <div className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg border font-mono text-sm break-all">
-            <span className="flex-1 text-xs">{newToken}</span>
-            <Button variant="ghost" size="icon" onClick={copyToken} className="flex-shrink-0">
-              {tokenCopied ? <Check size={14} className="text-green-600" /> : <Copy size={14} />}
+          <div className="flex items-start gap-3 bg-slate-900 rounded-lg p-4">
+            <code className="text-xs text-green-400 flex-1 font-mono leading-relaxed whitespace-pre-wrap break-all">{
+`<script\n  src="${window.location.origin}/widget.js"\n  data-token="${newToken}"\n  defer\n></script>`
+            }</code>
+            <Button
+              variant="ghost" size="icon"
+              onClick={copyToken}
+              className="text-slate-400 hover:text-white flex-shrink-0 h-7 w-7"
+            >
+              {tokenCopied ? <Check size={13} className="text-green-400" /> : <Copy size={13} />}
             </Button>
           </div>
           <DialogFooter>
