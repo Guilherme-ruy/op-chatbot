@@ -196,15 +196,15 @@ const CSS = `
   #chatbot-messages::-webkit-scrollbar-track { background: transparent; }
   #chatbot-messages::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 4px; }
 
-  .chatbot-msg {
-    max-width: 78%; padding: 10px 16px;
+  #chatbot-widget .chatbot-msg {
+    max-width: 78%; padding: 8px 14px;
     border-radius: 14px; line-height: 1.55;
     font-size: 13px; animation: chatbot-fadein .2s ease;
     word-break: break-word; overflow-wrap: anywhere;
   }
   @keyframes chatbot-fadein { from { opacity:0; transform: translateY(6px); } }
-  .chatbot-msg-bot  { background: #1e1e1e; color: #e0e0e0; align-self: flex-start; border-bottom-left-radius: 4px; }
-  .chatbot-msg-user { background: #25D366; color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
+  #chatbot-widget .chatbot-msg-bot  { background: #1e1e1e; color: #e0e0e0; align-self: flex-start; border-bottom-left-radius: 4px; }
+  #chatbot-widget .chatbot-msg-user { background: #25D366; color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
 
   #chatbot-typing {
     display: none; align-self: flex-start;

@@ -242,20 +242,35 @@ export async function chatRoutes(app: FastifyInstance) {
 
       // 8. Verifica qualificação pelo acumulador (fonte de verdade)
       let accumulated = await db.getCollectedData(sessionId);
+
+      // Se o bot soa como encerramento E ainda há campos obrigatórios faltando,
+      // extrai do histórico completo ANTES de checar qualificação.
+      // Cobre o caso de respostas curtas/ambíguas ("Todos", "Como empresa") que
+      // o extrator por mensagem isolada pode não associar ao campo correto.
+      const closingKeywords = ['equipe entrará', 'entraremos em contato', 'breve', 'obrigado', 'agradeço'];
+      const botSoundsLikeClosing = closingKeywords.some(k => aiResult.message.toLowerCase().includes(k));
+      const hasMissingRequired = siteFields
+        .filter(f => f.required)
+        .some(f => !accumulated[f.key]);
+
+      if ((aiResult.qualified || botSoundsLikeClosing) && hasMissingRequired) {
+        const allMsgs = await db.getMessageHistory(sessionId);
+        const userTexts = allMsgs.filter(m => m.role === 'user').map(m => m.content);
+        const finalExtract = await ai.extractFromHistory(userTexts, siteFields);
+        await db.mergeCollectedData(sessionId, finalExtract);
+        accumulated = await db.getCollectedData(sessionId);
+      }
+
       const isQualified = aiResult.qualified || ai.isLeadQualified(accumulated, siteFields);
 
       // Se qualificou mas a resposta não soa como encerramento, sobrescreve
-      if (isQualified) {
-        const closingKeywords = ['equipe entrará', 'entraremos em contato', 'breve', 'obrigado', 'agradeço'];
-        const soundsLikeClosing = closingKeywords.some(k => aiResult.message.toLowerCase().includes(k));
-        if (!soundsLikeClosing) {
-          const closings = [
-            `Perfeito! Recebemos tudo que precisamos. Nossa equipe entrará em contato em breve. 😊`,
-            `Ótimo! Suas informações foram registradas. Nossa equipe vai te contatar logo!`,
-            `Tudo certo! Em breve nosso time entrará em contato para dar continuidade ao projeto.`,
-          ];
-          aiResult = { ...aiResult, message: closings[Math.floor(Math.random() * closings.length)] };
-        }
+      if (isQualified && !botSoundsLikeClosing) {
+        const closings = [
+          `Perfeito! Recebemos tudo que precisamos. Nossa equipe entrará em contato em breve. 😊`,
+          `Ótimo! Suas informações foram registradas. Nossa equipe vai te contatar logo!`,
+          `Tudo certo! Em breve nosso time entrará em contato para dar continuidade ao projeto.`,
+        ];
+        aiResult = { ...aiResult, message: closings[Math.floor(Math.random() * closings.length)] };
       }
 
       app.log.info({ extracted: aiResult.collected, accumulated, isQualified }, 'Lead state');
@@ -263,19 +278,6 @@ export async function chatRoutes(app: FastifyInstance) {
       let whatsappUrl: string | undefined;
 
       if (isQualified) {
-        // Extração final: garante que dados de mensagens anteriores não se percam
-        const hasMissing = siteFields
-          .filter(f => f.required)
-          .some(f => !accumulated[f.key]);
-
-        if (hasMissing) {
-          const allMsgs = await db.getMessageHistory(sessionId);
-          const userTexts = allMsgs.filter(m => m.role === 'user').map(m => m.content);
-          const finalExtract = await ai.extractFromHistory(userTexts, siteFields);
-          await db.mergeCollectedData(sessionId, finalExtract);
-          accumulated = await db.getCollectedData(sessionId);
-        }
-
         whatsappUrl = ai.buildWhatsAppUrl(accumulated, siteFields, waNumber, botName);
 
         const leadId = await db.saveLead(sessionId, accumulated, siteName, whatsappUrl);
