@@ -16,12 +16,12 @@ Autentica o administrador e retorna um JWT válido por 8 horas.
 
 **Request:**
 ```json
-{ "email": "contato@guilhermeruy.com.br", "password": "senha" }
+{ "email": "contato@exemplo.com.br", "password": "senha" }
 ```
 
 **Response 200:**
 ```json
-{ "token": "eyJ...", "email": "contato@guilhermeruy.com.br" }
+{ "token": "eyJ...", "email": "contato@exemplo.com.br" }
 ```
 
 **Response 401:** `{ "error": "Credenciais inválidas." }`
@@ -34,7 +34,7 @@ Retorna dados do usuário autenticado.
 
 **Response 200:**
 ```json
-{ "id": "uuid", "email": "contato@guilhermeruy.com.br" }
+{ "id": "uuid", "email": "contato@exemplo.com.br" }
 ```
 
 ---
@@ -53,10 +53,10 @@ Lista todos os sites ativos (não deletados) com estatísticas agregadas.
   "domain": "clinicasilva.com.br",
   "token": "chatbot_...",
   "bot_name": "Ana",
-  "bot_avatar_url": null,
+  "bot_avatar_url": "/uploads/avatars/uuid.png",
   "whatsapp_number": "5511999990000",
   "monthly_session_limit": 500,
-  "limit_message": "Olá! Atingimos nosso limite mensal. Fale conosco pelo WhatsApp!",
+  "limit_message": "Olá! Fale conosco pelo WhatsApp.",
   "active": true,
   "deleted_at": null,
   "created_at": "2026-06-01T00:00:00Z",
@@ -68,44 +68,6 @@ Lista todos os sites ativos (não deletados) com estatísticas agregadas.
 
 ---
 
----
-
-## Upload
-
-### POST /upload/avatar
-
-Faz upload de uma imagem de avatar. Retorna a URL pública do arquivo salvo.
-
-**Content-Type:** `multipart/form-data`  
-**Campo:** `file` (imagem)  
-**Restrições:** JPG, PNG, WebP ou GIF · máx. 2 MB
-
-**Response 200:**
-```json
-{ "url": "/uploads/avatars/uuid.png" }
-```
-
-**Response 400:** formato inválido  
-**Response 413:** arquivo maior que 2 MB
-
-> A URL retornada deve ser salva em `bot_avatar_url` via `PATCH /sites/:id`.
-
----
-
-### DELETE /upload/avatar
-
-Remove um avatar do disco.
-
-**Request:**
-```json
-{ "path": "/uploads/avatars/uuid.png" }
-```
-
-**Response 204** (sem corpo)  
-Falha silenciosa se o arquivo não existir. Rejeita caminhos fora de `/uploads/avatars/`.
-
----
-
 ### GET /sites/deleted
 
 Lista sites em soft delete (excluídos pelo painel).
@@ -114,7 +76,7 @@ Lista sites em soft delete (excluídos pelo painel).
 
 ### POST /sites
 
-Cria um novo site. Token gerado automaticamente com prefixo `chatbot_`.
+Cria um novo site. Token gerado automaticamente com prefixo `chatbot_`. Campos padrão de coleta são inseridos automaticamente via transação.
 
 **Request:**
 ```json
@@ -199,7 +161,7 @@ Retorna estatísticas detalhadas de um site específico.
 **Response 200:**
 ```json
 {
-  "site": { "id": "...", "name": "Clínica Silva", "domain": "...", "monthly_session_limit": 500, ... },
+  "site": { "id": "...", "name": "Clínica Silva", "monthly_session_limit": 500, "..." : "..." },
   "sessions_this_month": 42,
   "qualified_this_month": 18,
   "leads_in_period": 15,
@@ -218,6 +180,141 @@ Retorna estatísticas detalhadas de um site específico.
 
 ---
 
+## Campos de coleta (site_fields)
+
+Configuram quais informações o chatbot coleta para cada site. Os prompts do LLM são gerados dinamicamente a partir desses campos.
+
+### GET /sites/:id/fields
+
+Lista os campos de coleta do site ordenados por `sort_order`.
+
+**Response 200:**
+```json
+[
+  {
+    "id": "uuid",
+    "site_id": "uuid",
+    "key": "nome_do_visitante",
+    "label": "Nome do visitante",
+    "hint": null,
+    "required": true,
+    "sort_order": 0,
+    "created_at": "2026-06-01T00:00:00Z"
+  },
+  {
+    "id": "uuid",
+    "site_id": "uuid",
+    "key": "tipo_de_servico",
+    "label": "Tipo de serviço",
+    "hint": "Pergunte qual tipo de serviço o visitante precisa. Exemplos: site, sistema, hospedagem, outro.",
+    "required": true,
+    "sort_order": 1,
+    "created_at": "2026-06-01T00:00:00Z"
+  }
+]
+```
+
+---
+
+### POST /sites/:id/fields
+
+Cria um novo campo de coleta.
+
+**Request:**
+```json
+{
+  "key": "segmento_de_mercado",
+  "label": "Segmento de mercado",
+  "hint": "Pergunte em qual segmento o cliente atua. Exemplos: saúde, educação, varejo.",
+  "required": false,
+  "sort_order": 5
+}
+```
+
+> A chave é normalizada automaticamente: lowercase + apenas letras, números e `_`.
+
+**Response 201:** Campo criado.
+
+**Response 409:** Chave já existe para este site.
+
+---
+
+### PATCH /sites/:id/fields/:fieldId
+
+Atualiza `label`, `hint` ou `required` de um campo. A `key` não pode ser alterada após a criação.
+
+**Campos aceitos:** `label`, `hint`, `required`, `sort_order`
+
+**Response 200:** Campo atualizado.
+
+---
+
+### DELETE /sites/:id/fields/:fieldId
+
+Remove um campo. Leads já criados não são afetados (os dados permanecem em `custom_data`).
+
+**Response 204**
+
+---
+
+### PUT /sites/:id/fields/reorder
+
+Reordena os campos enviando o array de IDs na nova ordem desejada.
+
+**Request:**
+```json
+{ "ids": ["uuid-campo-3", "uuid-campo-1", "uuid-campo-2"] }
+```
+
+**Response 200:** Array completo de campos na nova ordem.
+
+---
+
+### POST /sites/:id/fields/reset
+
+Apaga todos os campos do site e restaura os campos padrão:  
+`nome_do_visitante` · `tipo_de_servico` · `pessoa_fisica_ou_empresa` · `cnpj` · `whatsapp_ou_e_mail`
+
+**Response 200:** Array com os campos padrão recriados.
+
+---
+
+## Upload
+
+### POST /upload/avatar
+
+Faz upload de uma imagem de avatar. Retorna a URL pública do arquivo salvo.
+
+**Content-Type:** `multipart/form-data`  
+**Campo:** `file` (imagem)  
+**Restrições:** JPG, PNG, WebP ou GIF · máx. 2 MB
+
+**Response 200:**
+```json
+{ "url": "/uploads/avatars/uuid.png" }
+```
+
+**Response 400:** formato inválido  
+**Response 413:** arquivo maior que 2 MB
+
+> A URL retornada deve ser salva em `bot_avatar_url` via `PATCH /sites/:id`.
+
+---
+
+### DELETE /upload/avatar
+
+Remove um avatar do disco.
+
+**Request:**
+```json
+{ "path": "/uploads/avatars/uuid.png" }
+```
+
+**Response 204** (sem corpo)  
+Falha silenciosa se o arquivo não existir. Rejeita caminhos fora de `/uploads/avatars/`.
+
+---
+
 ## Leads
 
 ### GET /leads
@@ -232,14 +329,36 @@ Lista leads com filtros e paginação.
 | `dateFrom` | date (YYYY-MM-DD) | Data inicial |
 | `dateTo` | date (YYYY-MM-DD) | Data final |
 | `search` | string | Busca em nome e contato (ILIKE) |
-| `projectType` | string | `site`, `sistema`, `hospedagem`, `outro` |
 | `page` | int | Página (padrão: 1) |
 | `limit` | int | Itens por página (padrão: 20) |
 
 **Response 200:**
 ```json
 {
-  "leads": [...],
+  "leads": [
+    {
+      "id": "uuid",
+      "name": "João Silva",
+      "contact": "11987654321",
+      "project_type": "site",
+      "client_type": "pj",
+      "cnpj": "12345678000199",
+      "budget": null,
+      "custom_data": {
+        "nome_do_visitante": "João Silva",
+        "tipo_de_servico": "site",
+        "pessoa_fisica_ou_empresa": "pj",
+        "cnpj": "12345678000199",
+        "whatsapp_ou_e_mail": "11987654321"
+      },
+      "site_source": "Clínica Silva",
+      "whatsapp_url": "https://wa.me/...",
+      "notified_at": "2026-06-01T10:00:00Z",
+      "created_at": "2026-06-01T09:55:00Z",
+      "site_name": "Clínica Silva",
+      "site_domain": "clinicasilva.com.br"
+    }
+  ],
   "total": 87,
   "page": 1,
   "limit": 20

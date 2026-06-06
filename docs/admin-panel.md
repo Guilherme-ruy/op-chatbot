@@ -13,17 +13,20 @@ Interface web para gerenciar sites, acompanhar leads, visualizar conversas e mon
 
 ```
 Sidebar
-├── Sites       → gerenciar sites e tokens
-├── Leads       → leads qualificados com filtros
-├── Sessões     → histórico de conversas
-└── Dashboard   → métricas com seletor de site e período
+├── Sites          → gerenciar sites e tokens
+├── Leads          → leads qualificados com filtros
+├── Sessões        → histórico de conversas
+├── Dashboard      → métricas com seletor de site e período
+└── Configurações  → campos de coleta configuráveis por site
 ```
 
 ---
 
 ## Sites
 
-Lista todos os sites ativos com estatísticas acumuladas (sessões totais, leads totais).
+Lista todos os sites com estatísticas acumuladas (sessões totais, leads totais).
+
+**Filtro de status** (select no topo da tabela): `Ativos e Inativos` (padrão) · `Ativos` · `Inativos` · `Excluídos`. Selecionar "Excluídos" exibe os sites removidos com opção de restaurar.
 
 **Ações por site:**
 - **Ver detalhes** → Visão por site (gráficos, uso mensal, últimos leads)
@@ -31,8 +34,6 @@ Lista todos os sites ativos com estatísticas acumuladas (sessões totais, leads
 - **Ativar/Desativar** → controla se o widget aceita novas sessões
 - **Regenerar token** → invalida o token atual e gera um novo (exige digitar **SIM**)
 - **Excluir** → soft delete (dados preservados, site pode ser restaurado)
-
-**Filtro de status** (select no topo da tabela): `Ativos e Inativos` (padrão) · `Ativos` · `Inativos` · `Excluídos`. Selecionar "Excluídos" exibe os sites removidos com opção de restaurar.
 
 ### Criar / editar site
 
@@ -68,16 +69,15 @@ Lista paginada de todos os leads qualificados.
 **Filtros disponíveis:**
 - Busca por nome ou contato
 - Site de origem
-- Tipo de projeto (site / sistema / hospedagem / outro)
 - Período (data de / até)
 
-**Colunas:** nome, contato, tipo de projeto, PF/PJ, orçamento, site, status de notificação por e-mail, data.
+**Colunas:** nome, contato, dados coletados, site, status de notificação por e-mail, data.
+
+A coluna **Dados coletados** exibe todos os campos capturados para o lead (exceto nome e contato já mostrados separadamente). Campos além dos dois primeiros ficam ocultos e podem ser expandidos clicando em "+ N mais".
 
 **Ícone de e-mail:**
 - ✅ Verde → e-mail de notificação enviado
 - ⚠️ Laranja → notificação não enviada (falha no SMTP)
-
-**Botão WhatsApp:** abre conversa direta com o link pré-preenchido dos dados do lead.
 
 **Exportar CSV:** baixa todos os leads com os filtros ativos (sem paginação). Compatível com Excel (BOM UTF-8).
 
@@ -114,7 +114,7 @@ Visão de métricas com **seletor de site** e **filtro de período** no topo.
 | 90 dias | Últimos 90 dias |
 | Todo período | Histórico completo |
 
-O filtro afeta KPIs, gráficos de atividade, tipos de projeto e horários de pico.  
+O filtro afeta KPIs, gráficos de atividade, tipos de serviço e horários de pico.  
 **Não** afeta: "Uso mensal" (sempre mês corrente) e "Totais históricos" (sempre acumulado).
 
 ### Bloco "Uso mensal"
@@ -135,7 +135,7 @@ Ao atingir 100%, o widget do site é substituído automaticamente por um botão 
 ### Gráficos
 
 - **Atividade:** sessões e leads por dia (ou por mês, no modo "todo período")
-- **Tipos de projeto:** distribuição dos leads por categoria
+- **Tipos de serviço:** distribuição dos leads pelos valores coletados no campo de serviço
 - **Horários de pico:** distribuição por hora do dia
 
 ### Últimos leads
@@ -152,9 +152,57 @@ Idêntica ao Dashboard com site individual selecionado. Inclui adicionalmente o 
 
 ---
 
+## Configurações
+
+Página para gerenciar os **campos de coleta** de cada site — quais informações o chatbot pergunta ao visitante, em qual ordem e quais são obrigatórias para qualificar o lead.
+
+### Como funciona
+
+Os campos configurados aqui controlam:
+- O roteiro de perguntas do bot (via system prompt dinâmico)
+- Quando um lead é considerado qualificado (todos os campos obrigatórios preenchidos)
+- O texto da mensagem pré-preenchida no WhatsApp
+- O que aparece na coluna "Dados coletados" na página de Leads
+
+### Campos padrão
+
+Ao criar um novo site, os seguintes campos são inseridos automaticamente:
+
+| Ordem | Campo | Chave | Obrigatório |
+|---|---|---|---|
+| 1 | Nome do visitante | `nome_do_visitante` | ✅ |
+| 2 | Tipo de serviço | `tipo_de_servico` | ✅ |
+| 3 | Pessoa física ou empresa | `pessoa_fisica_ou_empresa` | ❌ |
+| 4 | CNPJ | `cnpj` | ❌ |
+| 5 | WhatsApp ou e-mail | `whatsapp_ou_e_mail` | ✅ |
+
+### Gerenciar campos
+
+- **Adicionar campo** → define nome, chave (gerada automaticamente) e instrução para o bot
+- **Editar** → atualiza nome, instrução e obrigatoriedade (chave não pode ser alterada)
+- **Reordenar** → botões ↑↓ por linha
+- **Remover** → exige digitar **SIM** para confirmar
+- **Restaurar padrões** → apaga todos os campos e recria os 5 padrões (exige **SIM**)
+
+### Instrução para o bot (hint)
+
+Campo de texto livre que diz ao bot como coletar e interpretar aquela informação. Exemplos:
+
+> Para "Tipo de serviço":
+> *"Pergunte qual tipo de serviço o visitante precisa. Exemplos: site, sistema, hospedagem. Aceite a resposta como está."*
+
+> Para "Segmento de mercado":
+> *"Pergunte em qual segmento o cliente atua. Exemplos: saúde, educação, varejo, tecnologia."*
+
+### Chave do campo
+
+Identificador único em snake_case, gerado automaticamente a partir do nome (`"Tipo de serviço"` → `tipo_de_servico`). Visível na tabela para referência. Não pode ser alterado após a criação.
+
+---
+
 ## Segurança
 
 - JWT expira em 8 horas — ao expirar, o painel redireciona para o login automaticamente
 - Após logout, o token é removido do `localStorage`
 - Erros 401 da API limpam o token e redirecionam para o login
-- Ações críticas (excluir, restaurar, regenerar token) exigem confirmação digitada
+- Ações críticas (excluir, restaurar, regenerar token, remover campos, restaurar padrões) exigem confirmação digitada
