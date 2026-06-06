@@ -13,7 +13,7 @@ import type { SmtpSettingsPublic, SmtpSettingsInput } from '@/types/admin'
 
 const EMPTY_FORM = {
   host:               '',
-  port:               '587',
+  port:               '',
   user_email:         '',
   pass:               '',
   from_address:       '',
