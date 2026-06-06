@@ -66,10 +66,15 @@ Excluir, Restaurar e Regenerar token exigem digitar **SIM** antes de prosseguir.
 
 Lista paginada de todos os leads qualificados.
 
-**Filtros disponíveis:**
-- Busca por nome ou contato
-- Site de origem
-- Período (data de / até)
+### Filtros
+
+| Filtro | Opções |
+|---|---|
+| **Busca** | Texto livre — pesquisa em nome e contato |
+| **Site** | Todos os sites · site individual |
+| **Período** | Hoje · 7 dias · 30 dias (padrão) · 90 dias · Todo período |
+
+O botão **"Como funciona"** no cabeçalho exibe um resumo do ciclo de vida dos leads: qualificação automática, notificação por e-mail e exportação CSV.
 
 **Colunas:** nome, contato, dados coletados, site, status de notificação por e-mail, data.
 
