@@ -12,7 +12,7 @@
 ## 1. Clonar e instalar dependências
 
 ```bash
-git clone https://github.com/your-username/op-chatbot.git
+git clone https://github.com/Guilherme-ruy/op-chatbot.git
 cd op-chatbot
 
 # Backend

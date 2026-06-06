@@ -15,7 +15,7 @@
 # Opção A — via Git (recomendado)
 git push origin main
 # Na VPS:
-git clone https://github.com/your-username/op-chatbot.git /opt/op-chatbot
+git clone https://github.com/Guilherme-ruy/op-chatbot.git /opt/op-chatbot
 
 # Opção B — via SCP
 scp -r . root@SEU_IP_VPS:/opt/op-chatbot

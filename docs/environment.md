@@ -73,29 +73,29 @@ Todas as variáveis ficam no arquivo `.env` na raiz do projeto (nunca versionado
 PORT=3001
 NODE_ENV=production
 
-# LLM
-LLM_API_KEY=your_llm_api_key_here
+# LLM — atualmente Google Gemini
+LLM_API_KEY=sua_chave_de_api_aqui
 LLM_MODEL=gemini-3.1-flash-lite
 
-# Banco
-DATABASE_URL=postgresql://chatbot_user:password@localhost:5432/chatbot_db
+# Banco de dados
+DATABASE_URL=postgresql://usuario:senha@localhost:5432/chatbot_db
 
-# SMTP (opcional — pode ser configurado pelo painel admin em vez do .env)
+# SMTP — opcional; pode ser configurado pelo painel admin (página E-mail)
 # SMTP_HOST=smtp.example.com
 # SMTP_PORT=587
-# SMTP_USER=contato@exemplo.com.br
-# SMTP_PASS=your_smtp_password
-# SMTP_FROM="Chatbot <contato@exemplo.com.br>"
-# NOTIFICATION_EMAIL=contato@exemplo.com.br
+# SMTP_USER=seu@email.com
+# SMTP_PASS=sua_senha_smtp
+# SMTP_FROM="Chatbot <noreply@seudominio.com.br>"
+# NOTIFICATION_EMAIL=contato@suaagencia.com.br
 
-# CORS
-ALLOWED_ORIGINS=example.com,www.example.com
+# Limite de mensagens por sessão (proteção de custo LLM)
 MAX_MESSAGES_PER_SESSION=20
 
-# Admin
-ADMIN_JWT_SECRET=your_random_secret_at_least_32_chars
-ADMIN_EMAIL=contato@guilhermeruy.com.br
-# ADMIN_PASSWORD=your_initial_password  ← remove after db:admin-migrate
+# Painel admin
+ADMIN_JWT_SECRET=sua_string_aleatoria_com_no_minimo_32_caracteres
+ADMIN_EMAIL=seu@email.com
+# ADMIN_PASSWORD — necessário apenas na primeira vez (npm run db:admin-migrate)
+# ADMIN_PASSWORD=sua_senha_inicial
 ```
 
 ---
