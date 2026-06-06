@@ -30,7 +30,7 @@ Visitante no site do cliente
 Inicialização do servidor
         ├─ runMigrations() — schema + admin_migration (idempotente)
         ├─ cleanupStaleSessions(30min) — encerra sessões 'active' sem atividade
-        └─ setInterval(cleanupStaleSessions, 1h) — repete a cada hora
+        └─ setInterval(cleanupStaleSessions, 30min) — repete a cada 30 minutos
 ```
 
 ---
