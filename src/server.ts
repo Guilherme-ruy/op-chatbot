@@ -138,11 +138,11 @@ runMigrations()
     }
 
     // ── Limpeza de sessões inativas ──────────────────────────────────────────────
-    // Sessões 'active' sem atividade há mais de 2h são marcadas como 'abandoned'.
+    // Sessões 'active' sem atividade há mais de 30min são marcadas como 'abandoned'.
     // Executado na inicialização (cobre histórico) e a cada hora.
     const runSessionCleanup = async () => {
       try {
-        const count = await cleanupStaleSessions(2);
+        const count = await cleanupStaleSessions(30);
         if (count > 0) app.log.info(`Sessões inativas encerradas: ${count}`);
       } catch (err) {
         app.log.error({ err }, 'Erro na limpeza de sessões inativas');

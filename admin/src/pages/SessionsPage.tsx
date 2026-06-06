@@ -8,8 +8,9 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
-import { MessageSquare, ChevronLeft, ChevronRight, X, Filter } from 'lucide-react'
+import { MessageSquare, ChevronLeft, ChevronRight, X, Filter, HelpCircle, CheckCircle2, Clock, XCircle } from 'lucide-react'
 import { cn, formatDateTime, formatTime } from '@/lib/utils'
 import type { Session } from '@/types/admin'
 
@@ -61,7 +62,8 @@ export default function SessionsPage() {
   } = useSessions()
   const { sites, fetchSites } = useSites()
 
-  const [period, setPeriod] = useState<PeriodDays>(30)
+  const [period,      setPeriod]      = useState<PeriodDays>(30)
+  const [helpOpen,    setHelpOpen]    = useState(false)
 
   const totalPages = Math.ceil(total / (filters.limit ?? 25))
   const hasFilters = !!(filters.siteId || filters.status || period !== 30)
@@ -110,12 +112,17 @@ export default function SessionsPage() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-xl font-bold">Sessões</h1>
-        <p className="text-sm text-muted-foreground">
-          Histórico de conversas
-          {total > 0 && <Badge variant="secondary" className="ml-2">{total}</Badge>}
-        </p>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div>
+          <h1 className="text-xl font-bold">Sessões</h1>
+          <p className="text-sm text-muted-foreground">
+            Histórico de conversas
+            {total > 0 && <Badge variant="secondary" className="ml-2">{total}</Badge>}
+          </p>
+        </div>
+        <Button variant="outline" size="sm" onClick={() => setHelpOpen(true)}>
+          <HelpCircle size={14} /> Como funciona
+        </Button>
       </div>
 
       {/* Filtros */}
@@ -271,6 +278,70 @@ export default function SessionsPage() {
           </div>
         )}
       </div>
+
+      {/* Dialog: Como funciona */}
+      <Dialog open={helpOpen} onOpenChange={setHelpOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <HelpCircle size={18} className="text-muted-foreground" />
+              Como funcionam as sessões
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 text-sm">
+            <p className="text-muted-foreground">
+              Uma sessão é criada cada vez que um visitante abre o chatbot. Ela passa por três possíveis status:
+            </p>
+
+            <div className="space-y-3">
+              <div className="flex gap-3 p-3 rounded-lg border bg-slate-50">
+                <Clock size={18} className="text-blue-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold">Ativa</p>
+                  <p className="text-muted-foreground text-xs mt-0.5">
+                    Conversa em andamento. O visitante está interagindo com o bot
+                    ou acabou de iniciar a sessão.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 p-3 rounded-lg border bg-green-50">
+                <CheckCircle2 size={18} className="text-green-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-green-700">Qualificada</p>
+                  <p className="text-muted-foreground text-xs mt-0.5">
+                    O visitante forneceu todos os campos obrigatórios configurados
+                    para o site. Um lead foi registrado automaticamente e uma
+                    notificação por e-mail foi disparada.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 p-3 rounded-lg border bg-slate-50">
+                <XCircle size={18} className="text-slate-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-slate-600">Abandonada</p>
+                  <p className="text-muted-foreground text-xs mt-0.5">
+                    A conversa encerrou sem gerar um lead. Isso acontece quando o
+                    visitante fecha o navegador, sai sem responder, pede um serviço
+                    fora do escopo ou simplesmente não continua.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-800 flex gap-2">
+              <Clock size={13} className="flex-shrink-0 mt-0.5" />
+              <span>
+                Sessões ativas sem nenhuma nova mensagem por <strong>30 minutos</strong> são
+                encerradas automaticamente como <strong>Abandonadas</strong> — isso cobre os casos em
+                que o visitante fecha a aba sem interagir.
+              </span>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Replay Sheet */}
       <Sheet open={!!selectedSession} onOpenChange={v => { if (!v) closeReplay() }}>

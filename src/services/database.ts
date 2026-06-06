@@ -133,12 +133,12 @@ export async function getMessageHistory(sessionId: string): Promise<Message[]> {
  * para cobrir conversas que terminaram sem qualificação (visitante
  * fechou o browser, disse "nada mais", etc.).
  */
-export async function cleanupStaleSessions(inactiveHours = 2): Promise<number> {
+export async function cleanupStaleSessions(inactiveMinutes = 30): Promise<number> {
   const { rowCount } = await pool.query(
     `UPDATE sessions
      SET status = 'abandoned', updated_at = NOW()
      WHERE status = 'active'
-       AND updated_at < NOW() - INTERVAL '${inactiveHours} hours'`
+       AND updated_at < NOW() - INTERVAL '${inactiveMinutes} minutes'`
   );
   return rowCount ?? 0;
 }
