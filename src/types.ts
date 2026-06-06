@@ -72,8 +72,22 @@ declare module 'fastify' {
   }
 }
 
+// ── Campos de coleta configuráveis por site ───────────────────────────────────
+
+export interface SiteField {
+  id: string;
+  site_id: string;
+  key: string;
+  label: string;
+  hint: string | null;
+  required: boolean;
+  sort_order: number;
+  created_at: Date;
+}
+
 // ── LLM ──────────────────────────────────────────────────────────────────────
 
+/** @deprecated — use Record<string, string | null> para campos dinâmicos */
 export interface CollectedData {
   name: string | null;
   projectType: string | null;
@@ -86,7 +100,8 @@ export interface CollectedData {
 export interface LLMResponse {
   message: string;
   qualified: boolean;
-  collected: CollectedData;
+  /** Mapa chave→valor com os dados extraídos — chaves correspondem a SiteField.key */
+  collected: Record<string, string | null>;
 }
 
 // ── API ───────────────────────────────────────────────────────────────────────

@@ -4,7 +4,7 @@ import type { Lead, LeadFilters } from '@/types/admin'
 
 const DEFAULT_FILTERS: LeadFilters = {
   siteId: undefined, dateFrom: undefined, dateTo: undefined,
-  search: undefined, projectType: undefined, page: 1, limit: 20,
+  search: undefined, page: 1, limit: 20,
 }
 
 export function useLeads() {

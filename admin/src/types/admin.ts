@@ -18,7 +18,7 @@ export interface Site {
 }
 
 export interface SiteDetailStats {
-  site: Site
+  site: Site | null  // null na visão de todos os sites
   // Mês corrente (card "Uso mensal")
   sessions_this_month:      number
   qualified_this_month:     number
@@ -35,6 +35,7 @@ export interface SiteDetailStats {
   recent_leads: {
     id: string; name: string | null; contact: string | null
     project_type: string | null; whatsapp_url: string | null; created_at: string
+    site_name?: string
   }[]
 }
 
@@ -60,7 +61,7 @@ export interface Lead {
 
 export interface LeadFilters {
   siteId?: string; dateFrom?: string; dateTo?: string
-  search?: string; projectType?: string; page?: number; limit?: number
+  search?: string; page?: number; limit?: number
 }
 
 export interface SessionMessage {
@@ -86,4 +87,23 @@ export interface SiteFormData {
   name: string; domain: string; bot_name: string
   bot_avatar_url?: string | null; whatsapp_number?: string | null
   monthly_session_limit?: number | null; limit_message?: string | null
+}
+
+export interface SiteField {
+  id: string
+  site_id: string
+  key: string
+  label: string
+  hint: string | null
+  required: boolean
+  sort_order: number
+  created_at: string
+}
+
+export interface SiteFieldFormData {
+  key: string
+  label: string
+  hint?: string | null
+  required: boolean
+  sort_order?: number
 }

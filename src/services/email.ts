@@ -1,6 +1,6 @@
 import nodemailer from 'nodemailer';
 import { config } from '../config';
-import type { CollectedData } from '../types';
+import type { SiteField } from '../types';
 
 const transporter = nodemailer.createTransport({
   host:   config.smtp.host,
@@ -14,7 +14,12 @@ const transporter = nodemailer.createTransport({
 
 // ── Template HTML do e-mail ───────────────────────────────────────────────────
 
-function buildEmailHtml(data: CollectedData, siteName: string, whatsappUrl: string): string {
+function buildEmailHtml(
+  customData: Record<string, string | null>,
+  fields: SiteField[],
+  siteName: string,
+  whatsappUrl: string
+): string {
   const row = (label: string, value: string | null) =>
     value
       ? `<tr>
@@ -22,6 +27,11 @@ function buildEmailHtml(data: CollectedData, siteName: string, whatsappUrl: stri
            <td style="padding:8px 12px;color:#1a1a1a">${value}</td>
          </tr>`
       : '';
+
+  const sorted = [...fields].sort((a, b) => a.sort_order - b.sort_order);
+  const rows = sorted
+    .map(f => row(f.label, customData[f.key] ?? null))
+    .join('');
 
   return `
 <!DOCTYPE html>
@@ -51,12 +61,7 @@ function buildEmailHtml(data: CollectedData, siteName: string, whatsappUrl: stri
       </p>
 
       <table style="width:100%;border-collapse:collapse;border:1px solid #eee;border-radius:10px;overflow:hidden">
-        ${row('Nome', data.name)}
-        ${row('Tipo de projeto', data.projectType)}
-        ${row('Perfil', data.clientType === 'pj' ? 'Empresa' : data.clientType === 'pf' ? 'Pessoa física' : null)}
-        ${row('CNPJ', data.cnpj)}
-        ${row('Contato', data.contact)}
-        ${row('Orçamento', data.budget)}
+        ${rows}
       </table>
 
       <!-- CTA WhatsApp -->
@@ -82,17 +87,36 @@ function buildEmailHtml(data: CollectedData, siteName: string, whatsappUrl: stri
 // ── Função exportada ──────────────────────────────────────────────────────────
 
 export async function sendLeadNotification(
-  data: CollectedData,
+  customData: Record<string, string | null>,
+  fields: SiteField[],
   siteName: string,
   whatsappUrl: string
 ): Promise<void> {
-  const subject = `🎯 Novo lead: ${data.name ?? 'Visitante'} (${siteName})`;
+  const name    = customData['name'] ?? 'Visitante';
+  const contact = customData['contact'] ?? '';
+
+  const subject = `🎯 Novo lead: ${name} (${siteName})`;
+
+  // Texto simples para clientes de e-mail sem HTML
+  const sorted = [...fields].sort((a, b) => a.sort_order - b.sort_order);
+  const textLines = sorted
+    .filter(f => customData[f.key])
+    .map(f => `${f.label}: ${customData[f.key]}`);
+  const textBody = [
+    `Novo lead qualificado via ${siteName}.`,
+    '',
+    ...textLines,
+    '',
+    `WhatsApp: ${whatsappUrl}`,
+  ].join('\n');
 
   await transporter.sendMail({
     from:    config.smtp.from,
     to:      config.notificationEmail,
     subject,
-    html:    buildEmailHtml(data, siteName, whatsappUrl),
-    text:    `Novo lead qualificado via ${siteName}.\n\nNome: ${data.name}\nProjeto: ${data.projectType}\nContato: ${data.contact}\nOrçamento: ${data.budget ?? 'não informado'}\n\nWhatsApp: ${whatsappUrl}`,
+    html:    buildEmailHtml(customData, fields, siteName, whatsappUrl),
+    text:    textBody,
   });
+
+  void contact; // usado implicitamente no nome
 }

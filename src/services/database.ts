@@ -1,4 +1,4 @@
-import type { Site, Session, Message, CollectedData } from '../types';
+import type { Site, Session, Message, SiteField } from '../types';
 import { pool } from '../db/pool';
 
 // ── Sites ─────────────────────────────────────────────────────────────────────
@@ -123,29 +123,50 @@ export async function getMessageHistory(sessionId: string): Promise<Message[]> {
   return rows;
 }
 
+// ── Campos de coleta por site ─────────────────────────────────────────────────
+
+export async function getSiteFields(siteId: string): Promise<SiteField[]> {
+  const { rows } = await pool.query<SiteField>(
+    'SELECT * FROM site_fields WHERE site_id = $1 ORDER BY sort_order ASC, created_at ASC',
+    [siteId]
+  );
+  return rows;
+}
+
 // ── Leads ─────────────────────────────────────────────────────────────────────
 
+/**
+ * Salva um lead qualificado. Popula as colunas indexadas para compat. com dados
+ * históricos e armazena o snapshot completo em custom_data (JSONB).
+ *
+ * Mapeamento de chaves legacy → colunas:
+ *   name, contact, cnpj, budget → direto pelo nome
+ *   service | project_type | projectType → project_type
+ *   client_type | clientType → client_type (somente 'pf' | 'pj')
+ */
 export async function saveLead(
   sessionId: string,
-  data: CollectedData,
+  customData: Record<string, string | null>,
   siteSource: string,
   whatsappUrl: string
 ): Promise<string> {
+  const name        = customData['name']    ?? null;
+  const projectType = customData['service'] ?? customData['project_type'] ?? customData['projectType'] ?? null;
+  const rawCt       = customData['client_type'] ?? customData['clientType'] ?? null;
+  const clientType  = (rawCt === 'pf' || rawCt === 'pj') ? rawCt : null;
+  const cnpj        = customData['cnpj']    ?? null;
+  const contact     = customData['contact'] ?? null;
+  const budget      = customData['budget']  ?? null;
+
   const { rows } = await pool.query<{ id: string }>(
     `INSERT INTO leads
-       (session_id, name, project_type, client_type, cnpj, contact, budget, site_source, whatsapp_url)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+       (session_id, name, project_type, client_type, cnpj, contact, budget,
+        custom_data, site_source, whatsapp_url)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
      RETURNING id`,
     [
-      sessionId,
-      data.name,
-      data.projectType,
-      data.clientType,
-      data.cnpj,
-      data.contact,
-      data.budget,
-      siteSource,
-      whatsappUrl,
+      sessionId, name, projectType, clientType, cnpj, contact, budget,
+      JSON.stringify(customData), siteSource, whatsappUrl,
     ]
   );
   return rows[0].id;

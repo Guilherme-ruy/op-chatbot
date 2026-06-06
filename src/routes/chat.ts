@@ -9,6 +9,7 @@ import type {
   SendMessageBody,
   ChatStartResponse,
   ChatMessageResponse,
+  SiteField,
 } from '../types';
 
 // ── Validação de telefone brasileiro ─────────────────────────────────────────
@@ -28,9 +29,8 @@ function validateBrazilianContact(contact: string): ContactValidity {
 
   // 10 dígitos: fixo com DDD (válido) ou celular com DDD incompleto
   if (digits.length === 10) {
-    // 3º dígito é 9 → provavelmente celular faltando 1 dígito
     if (digits[2] === '9') return { valid: false, reason: 'incomplete_mobile' };
-    return { valid: true }; // fixo com DDD ✓
+    return { valid: true };
   }
 
   // 9 dígitos começando com 9 → celular sem DDD
@@ -52,19 +52,6 @@ function contactValidationMessage(contact: string, reason: string): string {
     return `Pode me informar o DDD junto com o número? (ex: 11 9${digits.slice(digits[0] === '9' ? 1 : 0)}) 😊`;
   }
   return `Pode confirmar seu número de contato com DDD? 😊`;
-}
-
-// ── Variações da mensagem de boas-vindas — hardcoded, sem custo de API ────────
-const WELCOME_MESSAGES = [
-  'Olá! 👋 Estou aqui para te ajudar. Pode começar me dizendo seu nome? 😊',
-  'Oi! Para te conectar com a equipe certa, pode me dizer seu nome?',
-  'Olá! 😊 Estou aqui para ajudar. Como posso te chamar?',
-  'Oi, tudo bem? Para te direcionar melhor, pode me contar seu nome?',
-  'Bem-vindo! 🚀 Vou te ajudar a encontrar a solução perfeita. Me diz seu nome!',
-];
-
-function randomWelcome(): string {
-  return WELCOME_MESSAGES[Math.floor(Math.random() * WELCOME_MESSAGES.length)];
 }
 
 export async function chatRoutes(app: FastifyInstance) {
@@ -91,15 +78,11 @@ export async function chatRoutes(app: FastifyInstance) {
       }
 
       // 2. Verifica se o site está ativo
-      // (separado do lookup para distinguir "token inexistente" de "site desativado")
       if (!site.active) {
         return reply.status(503).send({ error: 'Chatbot temporariamente indisponível.' });
       }
 
-      // 3. Valida Origin contra o domínio registrado para este token
-      // O request deve vir exatamente do domínio cadastrado no painel admin
-      // para este token. Subdomínios também são aceitos (ex: www.meusite.com.br).
-      // Para testes locais, cadastre localhost ou localhost:3001 como domínio no admin.
+      // 3. Valida Origin contra o domínio registrado
       const origin = request.headers.origin ?? '';
       const originHost = origin.replace(/^https?:\/\//, '').replace(/\/$/, '');
       const domainMatch =
@@ -111,12 +94,9 @@ export async function chatRoutes(app: FastifyInstance) {
       }
 
       // 4. Verifica limite mensal de conversas do site (se configurado)
-      // monthly_session_limit null ou 0 = ilimitado
       if (site.monthly_session_limit !== null && site.monthly_session_limit > 0) {
         const usedThisMonth = await db.countMonthlySessionsForSite(site.id);
         if (usedThisMonth >= site.monthly_session_limit) {
-          // Se há mensagem personalizada, usa como texto do link WhatsApp;
-          // caso contrário cai no texto genérico de fallback
           const waNumber = site.whatsapp_number ?? '';
           const waUrl = site.limit_message
             ? `https://wa.me/${waNumber}?text=${encodeURIComponent(site.limit_message)}`
@@ -134,7 +114,7 @@ export async function chatRoutes(app: FastifyInstance) {
       const session = await db.createSession(site.id);
 
       // 6. Salva mensagem de boas-vindas no histórico (variação aleatória, sem custo de LLM)
-      const welcome = randomWelcome();
+      const welcome = ai.randomWelcome();
       await db.saveMessage(session.id, 'bot', welcome);
 
       const response: ChatStartResponse = {
@@ -166,7 +146,7 @@ export async function chatRoutes(app: FastifyInstance) {
     async (request, reply) => {
       const { sessionId, message } = request.body;
 
-      // 1. Valida sessão e carrega site (necessário para whatsapp_number)
+      // 1. Valida sessão e carrega site
       const session = await db.getSession(sessionId);
       if (!session) {
         return reply.status(404).send({ error: 'Sessão não encontrada.' });
@@ -176,11 +156,14 @@ export async function chatRoutes(app: FastifyInstance) {
       }
 
       const site = await db.getSiteBySessionId(sessionId);
-      const waNumber  = site?.whatsapp_number ?? '';
-      const siteName  = site?.name ?? '';
-      const botName   = site?.bot_name ?? siteName;
+      const waNumber = site?.whatsapp_number ?? '';
+      const siteName = site?.name ?? '';
+      const botName  = site?.bot_name ?? siteName;
 
-      // 2. Verifica limite de mensagens (guardrail de custo)
+      // 2. Carrega campos configurados do site
+      const siteFields: SiteField[] = site ? await db.getSiteFields(site.id) : [];
+
+      // 3. Verifica limite de mensagens (guardrail de custo)
       const count = await db.incrementMessageCount(sessionId);
       if (count > config.maxMessagesPerSession) {
         await db.updateSessionStatus(sessionId, 'abandoned');
@@ -191,21 +174,21 @@ export async function chatRoutes(app: FastifyInstance) {
         } satisfies ChatMessageResponse);
       }
 
-      // 3. Salva mensagem do usuário
+      // 4. Salva mensagem do usuário
       await db.saveMessage(sessionId, 'user', message);
 
-      // 4. Busca histórico + contexto acumulado e chama o LLM
+      // 5. Busca histórico + contexto acumulado e chama o LLM
       const [history, currentAccumulated] = await Promise.all([
         db.getMessageHistory(sessionId),
         db.getCollectedData(sessionId),
       ]);
+
       let aiResult: Awaited<ReturnType<typeof ai.chat>>;
       try {
-        aiResult = await ai.chat(history.slice(0, -1), message, currentAccumulated);
+        aiResult = await ai.chat(history.slice(0, -1), message, currentAccumulated, siteFields);
       } catch (err: unknown) {
         const errMsg = err instanceof Error ? err.message : String(err);
 
-        // 503 — modelo sobrecarregado momentaneamente: pede para tentar de novo
         if (errMsg.includes('503') || errMsg.includes('Service Unavailable') || errMsg.includes('overloaded')) {
           app.log.warn({ err }, 'LLM 503 — instabilidade temporária');
           return reply.send({
@@ -214,7 +197,6 @@ export async function chatRoutes(app: FastifyInstance) {
           } satisfies ChatMessageResponse);
         }
 
-        // 429 — cota esgotada: redireciona para WhatsApp
         if (errMsg.includes('429') || errMsg.includes('quota') || errMsg.includes('RESOURCE_EXHAUSTED')) {
           app.log.warn({ err }, 'LLM 429 — cota esgotada, fallback WhatsApp');
           return reply.send({
@@ -227,14 +209,14 @@ export async function chatRoutes(app: FastifyInstance) {
         throw err;
       }
 
-      // 5. Valida contato extraído ANTES de salvar/qualificar
-      //    Se inválido, anula o campo e sobrescreve a mensagem do bot
+      // 6. Valida contato ANTES de salvar/qualificar (somente se campo 'contact' existe)
+      const hasContactField = siteFields.some(f => f.key === 'contact');
       let contactInvalidReason: string | null = null;
-      if (aiResult.collected.contact) {
-        const cv = validateBrazilianContact(aiResult.collected.contact);
+      if (hasContactField && aiResult.collected['contact']) {
+        const cv = validateBrazilianContact(aiResult.collected['contact']);
         if (!cv.valid) {
           contactInvalidReason = cv.reason;
-          const validationMsg = contactValidationMessage(aiResult.collected.contact, cv.reason);
+          const validationMsg = contactValidationMessage(aiResult.collected['contact'], cv.reason);
           aiResult = {
             ...aiResult,
             message: validationMsg,
@@ -244,22 +226,19 @@ export async function chatRoutes(app: FastifyInstance) {
         }
       }
 
-      // 6. Salva resposta do bot (já possivelmente sobrescrita pela validação)
+      // 7. Salva resposta do bot e acumula dados
       await db.saveMessage(sessionId, 'bot', aiResult.message);
+      await db.mergeCollectedData(sessionId, aiResult.collected);
 
-      // 7. Acumula os dados extraídos da mensagem atual no banco
-      //    (contact já é null se era inválido)
-      await db.mergeCollectedData(sessionId, aiResult.collected as unknown as Record<string, string | null>);
+      if (contactInvalidReason) {
+        app.log.info({ contact: aiResult.collected['contact'], reason: contactInvalidReason }, 'Contato inválido — aguardando correção');
+      }
 
-      if (contactInvalidReason) app.log.info({ contact: aiResult.collected.contact, reason: contactInvalidReason }, 'Contato inválido — aguardando correção');
-
-      // 8. Verifica qualificação pelo acumulador — fonte de verdade mais confiável
+      // 8. Verifica qualificação pelo acumulador (fonte de verdade)
       let accumulated = await db.getCollectedData(sessionId);
-      const isQualified = aiResult.qualified ||
-        !!(accumulated.name && accumulated.projectType && accumulated.contact);
+      const isQualified = aiResult.qualified || ai.isLeadQualified(accumulated, siteFields);
 
-      // Se qualificou mas o bot disse "informe seu contato" ou similar (mismatch
-      // entre chatModel e extrator), substituímos pela mensagem de encerramento
+      // Se qualificou mas a resposta não soa como encerramento, sobrescreve
       if (isQualified) {
         const closingKeywords = ['equipe entrará', 'entraremos em contato', 'breve', 'obrigado', 'agradeço'];
         const soundsLikeClosing = closingKeywords.some(k => aiResult.message.toLowerCase().includes(k));
@@ -278,34 +257,26 @@ export async function chatRoutes(app: FastifyInstance) {
       let whatsappUrl: string | undefined;
 
       if (isQualified) {
-        // Extração final: se algum campo crítico ainda estiver vazio, varre todo
-        // o histórico de mensagens do usuário (garante que dados de mensagens
-        // anteriores — ex: nome dito antes de um 503 — não se percam)
-        const hasMissing = !accumulated.name || !accumulated.projectType || !accumulated.contact;
+        // Extração final: garante que dados de mensagens anteriores não se percam
+        const hasMissing = siteFields
+          .filter(f => f.required)
+          .some(f => !accumulated[f.key]);
+
         if (hasMissing) {
           const allMsgs = await db.getMessageHistory(sessionId);
           const userTexts = allMsgs.filter(m => m.role === 'user').map(m => m.content);
-          const finalExtract = await ai.extractFromHistory(userTexts);
-          await db.mergeCollectedData(sessionId, finalExtract as Record<string, string | null>);
+          const finalExtract = await ai.extractFromHistory(userTexts, siteFields);
+          await db.mergeCollectedData(sessionId, finalExtract);
           accumulated = await db.getCollectedData(sessionId);
         }
 
-        const fullCollected = {
-          name:        accumulated.name        ?? null,
-          projectType: accumulated.projectType ?? null,
-          clientType:  (accumulated.clientType ?? null) as 'pf' | 'pj' | null,
-          cnpj:        accumulated.cnpj        ?? null,
-          contact:     accumulated.contact     ?? null,
-          budget:      accumulated.budget      ?? null,
-        };
+        whatsappUrl = ai.buildWhatsAppUrl(accumulated, siteFields, waNumber, botName);
 
-        whatsappUrl = ai.buildWhatsAppUrl(fullCollected, siteName, waNumber, botName);
-
-        const leadId = await db.saveLead(sessionId, fullCollected, siteName, whatsappUrl);
+        const leadId = await db.saveLead(sessionId, accumulated, siteName, whatsappUrl);
         await db.updateSessionStatus(sessionId, 'qualified');
 
-        // Notificação por e-mail — não bloqueia a resposta; marca notified_at ao confirmar envio
-        sendLeadNotification(fullCollected, siteName, whatsappUrl)
+        // Notificação por e-mail (não bloqueia a resposta)
+        sendLeadNotification(accumulated, siteFields, siteName, whatsappUrl)
           .then(() => db.markLeadNotified(leadId))
           .catch(err => app.log.error({ err }, 'Erro ao enviar e-mail de notificação'));
       }

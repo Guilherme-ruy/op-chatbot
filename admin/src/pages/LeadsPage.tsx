@@ -10,12 +10,46 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Download, Search, X, Filter, Mail, MailX, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Download, Search, X, Filter, Mail, MailX, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
+import type { Lead } from '@/types/admin'
 
-const PROJECT_LABELS: Record<string, string> = { site: 'Site', sistema: 'Sistema', hospedagem: 'Hospedagem', outro: 'Outro' }
-const PROJECT_VARIANT: Record<string, 'default' | 'info' | 'warning' | 'secondary'> = {
-  site: 'default', sistema: 'info', hospedagem: 'warning', outro: 'secondary',
+// Exibe todos os dados coletados de um lead (custom_data) de forma compacta
+function CollectedDataCell({ lead }: { lead: Lead }) {
+  const [expanded, setExpanded] = useState(false)
+
+  // Campos principais já mostrados em colunas dedicadas
+  const MAIN_KEYS = new Set(['name', 'contact'])
+
+  const extra = Object.entries((lead as any).custom_data ?? {})
+    .filter(([k, v]) => !MAIN_KEYS.has(k) && v)
+
+  if (extra.length === 0) return <span className="text-muted-foreground text-xs">—</span>
+
+  // Em modo compacto, mostra só os 2 primeiros campos
+  const visible = expanded ? extra : extra.slice(0, 2)
+  const hasMore = extra.length > 2
+
+  return (
+    <div className="space-y-0.5 text-xs">
+      {visible.map(([k, v]) => (
+        <div key={k} className="flex gap-1.5 leading-snug">
+          <span className="text-muted-foreground capitalize whitespace-nowrap">{k.replace(/_/g, ' ')}:</span>
+          <span className="font-medium">{String(v)}</span>
+        </div>
+      ))}
+      {hasMore && (
+        <button
+          onClick={() => setExpanded(e => !e)}
+          className="flex items-center gap-0.5 text-muted-foreground hover:text-foreground transition-colors mt-0.5"
+        >
+          {expanded
+            ? <><ChevronUp size={10} /> menos</>
+            : <><ChevronDown size={10} /> +{extra.length - 2} mais</>}
+        </button>
+      )}
+    </div>
+  )
 }
 
 export default function LeadsPage() {
@@ -24,7 +58,7 @@ export default function LeadsPage() {
   const [searchInput, setSearchInput] = useState('')
   const searchTimer = useRef<ReturnType<typeof setTimeout>>()
   const totalPages = Math.ceil(total / (filters.limit ?? 20))
-  const hasFilters = !!(filters.siteId || filters.dateFrom || filters.dateTo || filters.projectType || searchInput)
+  const hasFilters = !!(filters.siteId || filters.dateFrom || filters.dateTo || searchInput)
 
   useEffect(() => { fetchSites(); fetchLeads() }, [])
 
@@ -54,7 +88,7 @@ export default function LeadsPage() {
     clearTimeout(searchTimer.current)
     setSearchInput('')
     resetFilters()
-    fetchLeads({ siteId: undefined, dateFrom: undefined, dateTo: undefined, search: undefined, projectType: undefined, page: 1, limit: 20 })
+    fetchLeads({ siteId: undefined, dateFrom: undefined, dateTo: undefined, search: undefined, page: 1, limit: 20 })
   }
 
   async function handleExport() {
@@ -90,7 +124,7 @@ export default function LeadsPage() {
             <Filter size={14} className="text-muted-foreground" />
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Filtros</span>
           </div>
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <div className="relative col-span-2 lg:col-span-1">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -111,17 +145,6 @@ export default function LeadsPage() {
               <SelectContent>
                 <SelectItem value="__all__">Todos os sites</SelectItem>
                 {sites.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
-
-            <Select value={filters.projectType ?? '__all__'} onValueChange={v => applyFilter('projectType', v === '__all__' ? undefined : v)}>
-              <SelectTrigger><SelectValue placeholder="Tipo de projeto" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__all__">Todos</SelectItem>
-                <SelectItem value="site">Site</SelectItem>
-                <SelectItem value="sistema">Sistema</SelectItem>
-                <SelectItem value="hospedagem">Hospedagem</SelectItem>
-                <SelectItem value="outro">Outro</SelectItem>
               </SelectContent>
             </Select>
 
@@ -147,9 +170,7 @@ export default function LeadsPage() {
               <TableRow>
                 <TableHead>Nome</TableHead>
                 <TableHead>Contato</TableHead>
-                <TableHead>Projeto</TableHead>
-                <TableHead>Perfil</TableHead>
-                <TableHead>Orçamento</TableHead>
+                <TableHead>Dados coletados</TableHead>
                 <TableHead>Site</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Data</TableHead>
@@ -158,25 +179,15 @@ export default function LeadsPage() {
             <TableBody>
               {loading ? (
                 Array.from({ length: 6 }).map((_, i) => (
-                  <TableRow key={i}>{Array.from({ length: 8 }).map((_, j) => <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>)}</TableRow>
+                  <TableRow key={i}>{Array.from({ length: 6 }).map((_, j) => <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>)}</TableRow>
                 ))
               ) : leads.length === 0 ? (
-                <TableRow><TableCell colSpan={8} className="text-center py-12 text-muted-foreground">Nenhum lead encontrado.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="text-center py-12 text-muted-foreground">Nenhum lead encontrado.</TableCell></TableRow>
               ) : leads.map(lead => (
                 <TableRow key={lead.id}>
                   <TableCell className="font-medium">{lead.name ?? '—'}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">{lead.contact ?? '—'}</TableCell>
-                  <TableCell>
-                    {lead.project_type
-                      ? <Badge variant={PROJECT_VARIANT[lead.project_type] ?? 'secondary'}>{PROJECT_LABELS[lead.project_type] ?? lead.project_type}</Badge>
-                      : <span className="text-muted-foreground">—</span>}
-                  </TableCell>
-                  <TableCell>
-                    {lead.client_type
-                      ? <Badge variant="outline">{lead.client_type.toUpperCase()}</Badge>
-                      : <span className="text-muted-foreground">—</span>}
-                  </TableCell>
-                  <TableCell className="text-sm">{lead.budget ?? '—'}</TableCell>
+                  <TableCell><CollectedDataCell lead={lead} /></TableCell>
                   <TableCell>
                     <div className="text-sm font-medium">{lead.site_name}</div>
                     <div className="text-xs text-muted-foreground">{lead.site_domain}</div>

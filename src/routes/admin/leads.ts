@@ -29,13 +29,12 @@ export async function adminLeadsRoutes(app: FastifyInstance) {
     const q = request.query as Record<string, string>;
 
     const filters: LeadFilters = {
-      siteId:      q.siteId      || undefined,
-      dateFrom:    q.dateFrom    || undefined,
-      dateTo:      q.dateTo      || undefined,
-      search:      q.search      || undefined,
-      projectType: q.projectType || undefined,
-      page:        q.page  ? parseInt(q.page)  : 1,
-      limit:       q.limit ? parseInt(q.limit) : 20,
+      siteId:   q.siteId   || undefined,
+      dateFrom: q.dateFrom || undefined,
+      dateTo:   q.dateTo   || undefined,
+      search:   q.search   || undefined,
+      page:     q.page  ? parseInt(q.page)  : 1,
+      limit:    q.limit ? parseInt(q.limit) : 20,
     };
 
     const { leads, total } = await listLeads(filters);
@@ -47,11 +46,10 @@ export async function adminLeadsRoutes(app: FastifyInstance) {
     const q = request.query as Record<string, string>;
 
     const filters: LeadFilters = {
-      siteId:      q.siteId      || undefined,
-      dateFrom:    q.dateFrom    || undefined,
-      dateTo:      q.dateTo      || undefined,
-      search:      q.search      || undefined,
-      projectType: q.projectType || undefined,
+      siteId:   q.siteId   || undefined,
+      dateFrom: q.dateFrom || undefined,
+      dateTo:   q.dateTo   || undefined,
+      search:   q.search   || undefined,
     };
 
     const leads = await exportLeads(filters);

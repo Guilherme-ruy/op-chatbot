@@ -12,7 +12,6 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { ArrowLeft, RefreshCw, Users, MessageSquare, AlertTriangle, Infinity, Copy, Check, ExternalLink, Info } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 
-const PROJECT_LABELS: Record<string, string> = { site: 'Site', sistema: 'Sistema', hospedagem: 'Hospedagem', outro: 'Outro' }
 
 const PERIODS = [
   { label: '7 dias',       days: 7  },
@@ -228,7 +227,7 @@ export default function SiteDetailPage() {
                   <p className="text-sm text-muted-foreground">Nenhum lead ainda.</p>
                 ) : stats.leads_by_project.map(p => (
                   <div key={p.type} className="flex items-center gap-3">
-                    <span className="text-sm w-24 flex-shrink-0">{PROJECT_LABELS[p.type] ?? p.type}</span>
+                    <span className="text-sm w-24 flex-shrink-0">{p.type}</span>
                     <div className="flex-1 bg-slate-100 rounded-full h-2 overflow-hidden">
                       <div
                         className="h-full bg-green-500 rounded-full"
@@ -265,7 +264,7 @@ export default function SiteDetailPage() {
                 <div key={lead.id} className="flex items-center justify-between px-6 py-3 border-b last:border-0 hover:bg-slate-50 transition-colors">
                   <div>
                     <span className="text-sm font-medium">{lead.name ?? '—'}</span>
-                    {lead.project_type && <Badge variant="secondary" className="ml-2 text-xs">{PROJECT_LABELS[lead.project_type] ?? lead.project_type}</Badge>}
+                    {lead.project_type && <Badge variant="secondary" className="ml-2 text-xs">{lead.project_type}</Badge>}
                     <div className="text-xs text-muted-foreground mt-0.5">{lead.contact ?? '—'} · {formatDate(lead.created_at)}</div>
                   </div>
                   {lead.whatsapp_url && (

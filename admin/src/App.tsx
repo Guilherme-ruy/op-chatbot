@@ -1,12 +1,13 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from '@/stores/auth'
-import AdminLayout   from '@/components/layout/AdminLayout'
-import LoginPage     from '@/pages/LoginPage'
-import ClientsPage   from '@/pages/ClientsPage'
+import AdminLayout    from '@/components/layout/AdminLayout'
+import LoginPage      from '@/pages/LoginPage'
+import ClientsPage    from '@/pages/ClientsPage'
 import SiteDetailPage from '@/pages/SiteDetailPage'
-import LeadsPage     from '@/pages/LeadsPage'
-import SessionsPage  from '@/pages/SessionsPage'
-import DashboardPage from '@/pages/DashboardPage'
+import LeadsPage      from '@/pages/LeadsPage'
+import SessionsPage   from '@/pages/SessionsPage'
+import DashboardPage  from '@/pages/DashboardPage'
+import ConfigPage     from '@/pages/ConfigPage'
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore(s => s.isAuthenticated)
@@ -31,6 +32,7 @@ export default function App() {
         <Route path="leads"       element={<LeadsPage />} />
         <Route path="sessions"    element={<SessionsPage />} />
         <Route path="dashboard"   element={<DashboardPage />} />
+        <Route path="config"      element={<ConfigPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/clients" replace />} />
     </Routes>

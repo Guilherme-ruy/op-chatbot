@@ -52,6 +52,7 @@ CREATE TABLE IF NOT EXISTS leads (
   cnpj           VARCHAR(20),
   contact        VARCHAR(255),
   budget         VARCHAR(100),
+  custom_data    JSONB       NOT NULL DEFAULT '{}',
   site_source    VARCHAR(255),
   whatsapp_url   TEXT,
   notified_at    TIMESTAMPTZ,
@@ -60,6 +61,21 @@ CREATE TABLE IF NOT EXISTS leads (
 
 CREATE INDEX IF NOT EXISTS idx_leads_session_id ON leads(session_id);
 CREATE INDEX IF NOT EXISTS idx_leads_created_at ON leads(created_at);
+
+-- ── Campos de coleta configuráveis por site ───────────────────────────────────
+CREATE TABLE IF NOT EXISTS site_fields (
+  id         UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+  site_id    UUID         NOT NULL REFERENCES sites(id) ON DELETE CASCADE,
+  key        VARCHAR(100) NOT NULL,
+  label      VARCHAR(255) NOT NULL,
+  hint       TEXT,
+  required   BOOLEAN      NOT NULL DEFAULT true,
+  sort_order INT          NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  UNIQUE(site_id, key)
+);
+
+CREATE INDEX IF NOT EXISTS idx_site_fields_site_id ON site_fields(site_id);
 
 -- ── Seed inicial (opcional) ───────────────────────────────────────────────────
 -- Execute `npm run db:migrate` para gerar um site de exemplo com token real.
