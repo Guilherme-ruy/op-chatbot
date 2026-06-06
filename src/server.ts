@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
 import staticFiles from '@fastify/static';
+import multipart from '@fastify/multipart';
 import jwt from '@fastify/jwt';
 import { join } from 'path';
 import { config } from './config';
@@ -13,6 +14,7 @@ import { adminSitesRoutes } from './routes/admin/sites';
 import { adminLeadsRoutes }    from './routes/admin/leads';
 import { adminSessionsRoutes }  from './routes/admin/sessions';
 import { adminDashboardRoutes } from './routes/admin/dashboard';
+import { adminUploadRoutes }    from './routes/admin/upload';
 
 async function build() {
   const app = Fastify({
@@ -56,6 +58,11 @@ async function build() {
     sign: { expiresIn: '8h' },   // default global — cada rota pode sobrescrever
   });
 
+  // ── Multipart (upload de avatares) ──────────────────────────────────────────
+  await app.register(multipart, {
+    limits: { fileSize: 2 * 1024 * 1024 }, // 2 MB
+  });
+
   // ── Arquivos estáticos (widget.js) ──────────────────────────────────────────
   await app.register(staticFiles, {
     root:          join(__dirname, '..', 'public'),
@@ -71,6 +78,17 @@ async function build() {
     },
   });
 
+  // ── Arquivos estáticos (avatares enviados via upload) ───────────────────────
+  await app.register(staticFiles, {
+    root:          join(process.cwd(), 'uploads'),
+    prefix:        '/uploads/',
+    decorateReply: false,
+    setHeaders: (res) => {
+      res.setHeader('Cache-Control', 'public, max-age=3600'); // 1h de cache
+      res.setHeader('Access-Control-Allow-Origin', '*');
+    },
+  });
+
   // ── Rotas de chat ────────────────────────────────────────────────────────────
   await app.register(chatRoutes);
 
@@ -80,6 +98,7 @@ async function build() {
   await app.register(adminLeadsRoutes);
   await app.register(adminSessionsRoutes);
   await app.register(adminDashboardRoutes);
+  await app.register(adminUploadRoutes);
 
   // ── Admin SPA (Vue 3 + Vuetify) — catch-all para Vue Router history mode ────
   // Deve vir DEPOIS dos plugins estáticos para que arquivos reais tenham prioridade

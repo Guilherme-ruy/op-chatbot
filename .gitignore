@@ -22,6 +22,10 @@ docker-compose.override.yml
 *.log
 npm-debug.log*
 
+# Uploads (avatars gerados em runtime — não versionados)
+uploads/avatars/*
+!uploads/avatars/.gitkeep
+
 # Sistema operacional
 .DS_Store
 Thumbs.db

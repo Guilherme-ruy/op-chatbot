@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -6,7 +6,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { uploadAvatar, deleteAvatar } from '@/api/sites'
 import type { Site, SiteFormData } from '@/types/admin'
+import { ImagePlus, X } from 'lucide-react'
 
 const schema = z.object({
   name:           z.string().min(1, 'Obrigatório'),
@@ -26,7 +28,7 @@ const schema = z.object({
     v => {
       if (v === '' || v === null || v === undefined) return null;
       const n = Number(v);
-      return isNaN(n) || n === 0 ? null : n; // 0 = ilimitado
+      return isNaN(n) || n === 0 ? null : n;
     },
     z.number().int().min(1).nullable().optional()
   ),
@@ -46,29 +48,84 @@ interface ClientFormDialogProps {
 export default function ClientFormDialog({ open, onOpenChange, site, saving, onSave }: ClientFormDialogProps) {
   const isEdit = !!site
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
   })
 
+  // Avatar local — File selecionado ainda não enviado
+  const [pendingFile,    setPendingFile]    = useState<File | null>(null)
+  const [pendingPreview, setPendingPreview] = useState<string | null>(null)
+  const [uploadError,    setUploadError]    = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const avatarUrl = watch('bot_avatar_url')
+
   useEffect(() => {
     if (open) {
+      setPendingFile(null)
+      setPendingPreview(null)
+      setUploadError(null)
       reset(site ? {
         name: site.name, domain: site.domain, bot_name: site.bot_name,
         bot_avatar_url: site.bot_avatar_url, whatsapp_number: site.whatsapp_number ?? '',
         monthly_session_limit: site.monthly_session_limit,
         limit_message: site.limit_message,
-      } : { name: '', domain: '', bot_name: '', bot_avatar_url: '', whatsapp_number: '', monthly_session_limit: undefined, limit_message: undefined })
+      } : { name: '', domain: '', bot_name: '', bot_avatar_url: '', whatsapp_number: '',
+            monthly_session_limit: undefined, limit_message: undefined })
     }
   }, [open, site, reset])
 
-  function onSubmit(data: FormValues) {
-    onSave(data as SiteFormData)
-  }
-
-  // Permite apenas dígitos no campo
   function onlyDigits(e: React.FormEvent<HTMLInputElement>) {
     e.currentTarget.value = e.currentTarget.value.replace(/\D/g, '')
   }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      setUploadError('Formato inválido. Use JPG, PNG, WebP ou GIF.')
+      return
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setUploadError('Arquivo muito grande. Máximo: 2 MB.')
+      return
+    }
+
+    setUploadError(null)
+    setPendingFile(file)
+    setPendingPreview(URL.createObjectURL(file))
+  }
+
+  function removeAvatar() {
+    setPendingFile(null)
+    setPendingPreview(null)
+    setValue('bot_avatar_url', null)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  async function onSubmit(data: FormValues) {
+    let finalAvatarUrl = data.bot_avatar_url ?? null
+
+    // Se há arquivo novo → faz upload antes de salvar o formulário
+    if (pendingFile) {
+      try {
+        finalAvatarUrl = await uploadAvatar(pendingFile)
+        // Remove avatar antigo do disco se era um upload local
+        if (site?.bot_avatar_url?.startsWith('/uploads/')) {
+          deleteAvatar(site.bot_avatar_url).catch(() => {})
+        }
+      } catch {
+        setUploadError('Falha ao enviar imagem. Tente novamente.')
+        return
+      }
+    }
+
+    onSave({ ...data, bot_avatar_url: finalAvatarUrl } as SiteFormData)
+  }
+
+  // URL de preview: arquivo local tem prioridade sobre URL salva
+  const previewSrc = pendingPreview ?? avatarUrl ?? null
 
   return (
     <Dialog open={open} onOpenChange={v => !saving && onOpenChange(v)}>
@@ -88,11 +145,60 @@ export default function ClientFormDialog({ open, onOpenChange, site, saving, onS
               <Input {...register('domain')} placeholder="Ex: clinicasilva.com.br ou localhost:3001" />
               <p className="text-xs text-muted-foreground mt-1">Ex: clinicasilva.com.br ou localhost:3001</p>
             </Field>
+
+            {/* Avatar do bot */}
+            <div className="space-y-1.5">
+              <Label>Avatar do bot (opcional)</Label>
+              <div className="flex items-center gap-3">
+                {/* Preview */}
+                <div className="w-14 h-14 rounded-xl bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0 border">
+                  {previewSrc ? (
+                    <img src={previewSrc} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <ImagePlus size={20} className="text-slate-400" />
+                  )}
+                </div>
+
+                <div className="flex-1 space-y-1.5">
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="text-xs"
+                    >
+                      {previewSrc ? 'Trocar imagem' : 'Selecionar imagem'}
+                    </Button>
+                    {previewSrc && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={removeAvatar}
+                        className="text-xs text-destructive hover:text-destructive"
+                      >
+                        <X size={13} /> Remover
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">JPG, PNG, WebP ou GIF · máx. 2 MB</p>
+                  {uploadError && <p className="text-xs text-destructive">{uploadError}</p>}
+                </div>
+              </div>
+
+              {/* Input file oculto */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                className="hidden"
+                onChange={handleFileChange}
+              />
+            </div>
+
             <Field label="Nome do bot *" error={errors.bot_name?.message}>
               <Input {...register('bot_name')} placeholder="Ex: Ana da Clínica Silva" />
-            </Field>
-            <Field label="URL do avatar (opcional)" error={errors.bot_avatar_url?.message}>
-              <Input {...register('bot_avatar_url')} placeholder="https://..." />
             </Field>
 
             <div className="grid grid-cols-2 gap-3">
@@ -124,7 +230,7 @@ export default function ClientFormDialog({ open, onOpenChange, site, saving, onS
                 placeholder="Ex: Olá! Vi seu site e gostaria de mais informações sobre os serviços."
                 maxLength={500}
               />
-              <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Ao atingir o limite, o widget é substituído automaticamente por um botão de WhatsApp no site.
               </p>
             </Field>

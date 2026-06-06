@@ -16,6 +16,9 @@ RUN npm run build:widget && npm run build
 RUN cp src/db/schema.sql dist/db/schema.sql && \
     cp src/db/admin_migration.sql dist/db/admin_migration.sql
 
+# Garante que a pasta de uploads existe (sobrescrita pelo volume em produção)
+RUN mkdir -p uploads/avatars
+
 # Remove devDependencies para imagem menor
 RUN npm prune --omit=dev
 
