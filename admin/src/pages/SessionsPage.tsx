@@ -172,22 +172,19 @@ export default function SessionsPage() {
           {/* Período */}
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Período</Label>
-            <div className="flex gap-1 flex-wrap">
-              {PERIODS.map(p => (
-                <button
-                  key={p.days}
-                  onClick={() => applyPeriod(p.days)}
-                  className={cn(
-                    'px-2.5 py-1 rounded-md text-xs font-medium transition-colors border',
-                    period === p.days
-                      ? 'bg-slate-900 text-white border-slate-900'
-                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                  )}
-                >
-                  {p.label}
-                </button>
-              ))}
-            </div>
+            <Select
+              value={String(period)}
+              onValueChange={v => applyPeriod(Number(v) as PeriodDays)}
+            >
+              <SelectTrigger className="h-8 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PERIODS.map(p => (
+                  <SelectItem key={p.days} value={String(p.days)}>{p.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
