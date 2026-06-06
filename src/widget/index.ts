@@ -137,7 +137,7 @@ const CSS = `
   #chatbot-panel {
     position: absolute;
     bottom: 70px; right: 0;
-    width: 360px; max-height: 540px;
+    width: 360px; max-height: min(540px, calc(100vh - 110px));
     background: #0d0d0d;
     border: 1px solid rgba(255,255,255,.08);
     border-radius: 20px;
