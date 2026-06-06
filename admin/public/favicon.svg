@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Green rounded background matching bg-green-500 (#22c55e) -->
+  <rect width="32" height="32" rx="7" fill="#22c55e"/>
+  <!-- Lucide Bot icon (24x24), scaled to 18px and centered -->
+  <g transform="translate(7,7) scale(0.75)" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M12 8V4H8"/>
+    <rect x="4" y="8" width="16" height="12" rx="2"/>
+    <path d="M2 14h2"/>
+    <path d="M20 14h2"/>
+    <path d="M15 13v2"/>
+    <path d="M9 13v2"/>
+  </g>
+</svg>
