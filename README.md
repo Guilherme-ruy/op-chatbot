@@ -20,12 +20,13 @@ Tudo isso sem nenhuma modificação no site do cliente além de uma tag `<script
 
 - **Widget embeddable** — instalação com uma única linha de HTML
 - **LLM conversacional** — dois modelos em paralelo: um responde, outro extrai dados estruturados
-- **Qualificação automática** — detecta quando nome + projeto + contato estão preenchidos
+- **Campos de coleta configuráveis** — cada site define quais informações o bot coleta, em qual ordem e quais são obrigatórias
+- **Qualificação automática** — lead qualificado quando todos os campos obrigatórios configurados são preenchidos
 - **WhatsApp pré-preenchido** — link gerado com os dados do lead ao qualificar
 - **Notificação por e-mail** — disparo automático ao qualificar o lead
-- **Painel admin** — gerenciamento de clientes, leads, sessões e dashboard com KPIs
+- **Painel admin** — gerenciamento de sites, leads, sessões, dashboard, campos configuráveis e SMTP
 - **Multi-site** — um backend serve múltiplos clientes, cada um com token próprio
-- **Rate limiting por plano** — limite mensal de conversas configurável por cliente
+- **Rate limiting** — limite mensal de conversas configurável
 - **Exportação CSV** — leads filtrados exportáveis diretamente pelo painel
 
 ---
