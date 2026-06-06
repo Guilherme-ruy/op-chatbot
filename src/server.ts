@@ -149,7 +149,7 @@ runMigrations()
       }
     };
     await runSessionCleanup();
-    const cleanupInterval = setInterval(runSessionCleanup, 60 * 60 * 1000); // 1h
+    const cleanupInterval = setInterval(runSessionCleanup, 30 * 60 * 1000); // 30min
 
     // Graceful shutdown — fecha conexões do pool ao encerrar o processo
     const shutdown = async (signal: string) => {

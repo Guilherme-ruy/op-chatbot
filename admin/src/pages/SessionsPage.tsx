@@ -11,7 +11,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { MessageSquare, ChevronLeft, ChevronRight, X, Filter, HelpCircle, CheckCircle2, Clock, XCircle } from 'lucide-react'
-import { cn, formatDateTime, formatTime } from '@/lib/utils'
+import { formatDateTime, formatTime } from '@/lib/utils'
 import type { Session } from '@/types/admin'
 
 // ── Constantes ────────────────────────────────────────────────────────────────
@@ -96,13 +96,12 @@ export default function SessionsPage() {
   }
 
   function handleClearAll() {
+    const dateFrom = periodToDateFrom(30)
     setPeriod(30)
-    resetFilters()
-    fetchSessions({
-      siteId: undefined, status: undefined,
-      dateFrom: periodToDateFrom(30), dateTo: undefined,
-      page: 1, limit: 25,
-    })
+    // Não usa resetFilters() para evitar zerar dateFrom no hook — a paginação
+    // também precisa do dateFrom correto ao navegar páginas.
+    updateFilters({ siteId: undefined, status: undefined, dateFrom, dateTo: undefined, page: 1 })
+    fetchSessions({ siteId: undefined, status: undefined, dateFrom, dateTo: undefined, page: 1, limit: 25 })
   }
 
   const collectedEntries = (s: Session) =>
