@@ -21,7 +21,7 @@ function CollectedDataCell({ lead }: { lead: Lead }) {
   // Campos principais já mostrados em colunas dedicadas
   const MAIN_KEYS = new Set(['name', 'contact'])
 
-  const extra = Object.entries((lead as any).custom_data ?? {})
+  const extra = Object.entries(lead.custom_data ?? {})
     .filter(([k, v]) => !MAIN_KEYS.has(k) && v)
 
   if (extra.length === 0) return <span className="text-muted-foreground text-xs">—</span>

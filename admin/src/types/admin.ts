@@ -51,6 +51,7 @@ export interface Lead {
   client_type: 'pf' | 'pj' | null
   cnpj: string | null
   budget: string | null
+  custom_data: Record<string, string | null>
   site_source: string | null
   whatsapp_url: string | null
   notified_at: string | null

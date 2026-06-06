@@ -108,6 +108,18 @@ function buildExtractSystemPrompt(fields: SiteField[]): string {
     return `- ${f.key}: extraia "${f.label.toLowerCase()}"${hintSuffix}`;
   }).join('\n');
 
+  // Identifica a chave do campo de contato para incluir na nota de atenção
+  const contactFieldKey = sorted.find(f =>
+    f.key === 'whatsapp_ou_e_mail' ||
+    f.key === 'contact' ||
+    f.key.includes('contato') ||
+    f.key.includes('whatsapp')
+  )?.key;
+
+  const phoneNote = contactFieldKey
+    ? `- Um número de telefone (8-11 dígitos) ou e-mail é o campo "${contactFieldKey}", NUNCA outro campo`
+    : '';
+
   return `Você é um extrator de dados. Leia a mensagem e extraia SOMENTE o que está EXPLICITAMENTE escrito.
 NUNCA invente, suponha ou infira valores. Se não tiver certeza absoluta, retorne null.
 
@@ -116,7 +128,7 @@ ${fieldDescriptions}
 - qualified: true APENAS se esta mensagem sozinha contiver todos os campos obrigatórios
 
 Atenção:
-- Um número de telefone (8-11 dígitos) é o campo "contact", NUNCA outro campo
+${phoneNote}
 - Se em dúvida sobre qualquer campo, retorne null`.trim();
 }
 

@@ -237,7 +237,7 @@ export async function chatRoutes(app: FastifyInstance) {
       await db.mergeCollectedData(sessionId, aiResult.collected);
 
       if (contactInvalidReason) {
-        app.log.info({ contact: aiResult.collected['contact'], reason: contactInvalidReason }, 'Contato inválido — aguardando correção');
+        app.log.info({ field: contactField?.key, reason: contactInvalidReason }, 'Contato inválido — aguardando correção');
       }
 
       // 8. Verifica qualificação pelo acumulador (fonte de verdade)
