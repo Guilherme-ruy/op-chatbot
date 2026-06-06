@@ -118,13 +118,15 @@ export default function ClientFormDialog({ open, onOpenChange, site, saving, onS
               </Field>
             </div>
 
-            <Field label="Mensagem ao atingir o limite (opcional)" error={errors.limit_message?.message}>
+            <Field label="Mensagem no WhatsApp ao atingir o limite (opcional)" error={errors.limit_message?.message}>
               <Input
                 {...register('limit_message')}
-                placeholder="Ex: Olá! No momento não conseguimos atender. Fale conosco pelo WhatsApp!"
+                placeholder="Ex: Olá! Vi seu site e gostaria de mais informações sobre os serviços."
                 maxLength={500}
               />
-              <p className="text-xs text-muted-foreground mt-1">Aparece na bolha do widget quando o limite mensal é atingido.</p>
+              <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                Ao atingir o limite, o widget é substituído automaticamente por um botão de WhatsApp no site.
+              </p>
             </Field>
           </div>
 

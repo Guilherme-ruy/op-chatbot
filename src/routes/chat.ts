@@ -115,11 +115,17 @@ export async function chatRoutes(app: FastifyInstance) {
       if (site.monthly_session_limit !== null && site.monthly_session_limit > 0) {
         const usedThisMonth = await db.countMonthlySessionsForSite(site.id);
         if (usedThisMonth >= site.monthly_session_limit) {
+          // Se há mensagem personalizada, usa como texto do link WhatsApp;
+          // caso contrário cai no texto genérico de fallback
+          const waNumber = site.whatsapp_number ?? '';
+          const waUrl = site.limit_message
+            ? `https://wa.me/${waNumber}?text=${encodeURIComponent(site.limit_message)}`
+            : buildFallbackWhatsAppUrl(waNumber, site.name);
+
           return reply.status(429).send({
             error: 'Limite mensal de conversas atingido.',
             limitReached: true,
-            whatsappUrl: buildFallbackWhatsAppUrl(site.whatsapp_number ?? '', site.name),
-            limitMessage: site.limit_message ?? null,
+            whatsappUrl: waUrl,
           });
         }
       }

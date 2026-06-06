@@ -424,9 +424,9 @@ function addUnavailableMessage() {
   scrollToBottom();
 }
 
-function switchToWhatsAppMode(whatsappUrl: string | undefined, limitMessage?: string | null) {
+function switchToWhatsAppMode(whatsappUrl: string | undefined) {
   // 429 — limite mensal atingido: substitui o widget pelo botão de WhatsApp
-  // ou some completamente se não houver número configurado
+  // (a mensagem personalizada já está embutida no whatsappUrl pelo backend)
 
   // Fecha e esconde o painel de chat
   const panel = $('chatbot-panel');
@@ -446,18 +446,6 @@ function switchToWhatsAppMode(whatsappUrl: string | undefined, limitMessage?: st
       e.stopPropagation();
       window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
     };
-
-    // Exibe mensagem personalizada na bolha proativa (se configurada)
-    if (limitMessage) {
-      const textEl = $('chatbot-bubble-text');
-      if (textEl) textEl.textContent = limitMessage;
-      const bubble = $('chatbot-bubble');
-      if (bubble) {
-        bubble.classList.add('chatbot-show');
-        // Clique na bolha também abre WhatsApp
-        bubble.onclick = () => window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
-      }
-    }
   } else {
     // Sem WhatsApp configurado — esconde tudo
     const widget = document.getElementById('chatbot-widget');
@@ -495,7 +483,7 @@ async function startSession() {
       // Limite mensal atingido — substitui o widget pelo botão de WhatsApp
       const data = await res.json().catch(() => ({}));
       setTyping(false);
-      switchToWhatsAppMode(data.whatsappUrl, data.limitMessage);
+      switchToWhatsAppMode(data.whatsappUrl);
       return;
     }
 
