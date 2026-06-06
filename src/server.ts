@@ -16,6 +16,7 @@ import { adminSessionsRoutes }  from './routes/admin/sessions';
 import { adminDashboardRoutes } from './routes/admin/dashboard';
 import { adminUploadRoutes }    from './routes/admin/upload';
 import { adminFieldsRoutes }    from './routes/admin/fields';
+import { cleanupStaleSessions } from './services/database';
 
 async function build() {
   const app = Fastify({
@@ -136,9 +137,24 @@ runMigrations()
       process.exit(1);
     }
 
+    // ── Limpeza de sessões inativas ──────────────────────────────────────────────
+    // Sessões 'active' sem atividade há mais de 2h são marcadas como 'abandoned'.
+    // Executado na inicialização (cobre histórico) e a cada hora.
+    const runSessionCleanup = async () => {
+      try {
+        const count = await cleanupStaleSessions(2);
+        if (count > 0) app.log.info(`Sessões inativas encerradas: ${count}`);
+      } catch (err) {
+        app.log.error({ err }, 'Erro na limpeza de sessões inativas');
+      }
+    };
+    await runSessionCleanup();
+    const cleanupInterval = setInterval(runSessionCleanup, 60 * 60 * 1000); // 1h
+
     // Graceful shutdown — fecha conexões do pool ao encerrar o processo
     const shutdown = async (signal: string) => {
       app.log.info(`Sinal ${signal} recebido — encerrando servidor...`);
+      clearInterval(cleanupInterval);
       await app.close();
       await pool.end();
       process.exit(0);

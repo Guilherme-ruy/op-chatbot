@@ -125,6 +125,24 @@ export async function getMessageHistory(sessionId: string): Promise<Message[]> {
 
 // ── Campos de coleta por site ─────────────────────────────────────────────────
 
+/**
+ * Marca como 'abandoned' todas as sessões ativas sem atividade
+ * há mais de `inactiveHours` horas. Retorna a quantidade afetada.
+ *
+ * Chamado na inicialização do servidor e periodicamente a cada hora,
+ * para cobrir conversas que terminaram sem qualificação (visitante
+ * fechou o browser, disse "nada mais", etc.).
+ */
+export async function cleanupStaleSessions(inactiveHours = 2): Promise<number> {
+  const { rowCount } = await pool.query(
+    `UPDATE sessions
+     SET status = 'abandoned', updated_at = NOW()
+     WHERE status = 'active'
+       AND updated_at < NOW() - INTERVAL '${inactiveHours} hours'`
+  );
+  return rowCount ?? 0;
+}
+
 export async function getSiteFields(siteId: string): Promise<SiteField[]> {
   const { rows } = await pool.query<SiteField>(
     'SELECT * FROM site_fields WHERE site_id = $1 ORDER BY sort_order ASC, created_at ASC',
