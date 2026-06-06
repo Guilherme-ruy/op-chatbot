@@ -150,13 +150,14 @@ export async function saveLead(
   siteSource: string,
   whatsappUrl: string
 ): Promise<string> {
-  const name        = customData['name']    ?? null;
-  const projectType = customData['service'] ?? customData['project_type'] ?? customData['projectType'] ?? null;
-  const rawCt       = customData['client_type'] ?? customData['clientType'] ?? null;
+  // Chaves atuais (geradas por toSlug a partir dos labels) + chaves legadas para compat.
+  const name        = customData['nome_do_visitante']        ?? customData['name']       ?? null;
+  const projectType = customData['tipo_de_servico']          ?? customData['service']    ?? customData['project_type'] ?? customData['projectType'] ?? null;
+  const rawCt       = customData['pessoa_fisica_ou_empresa'] ?? customData['client_type']?? customData['clientType']   ?? null;
   const clientType  = (rawCt === 'pf' || rawCt === 'pj') ? rawCt : null;
-  const cnpj        = customData['cnpj']    ?? null;
-  const contact     = customData['contact'] ?? null;
-  const budget      = customData['budget']  ?? null;
+  const cnpj        = customData['cnpj'] ?? null;
+  const contact     = customData['whatsapp_ou_e_mail']       ?? customData['contact']    ?? null;
+  const budget      = customData['orcamento_estimado']       ?? customData['budget']     ?? null;
 
   const { rows } = await pool.query<{ id: string }>(
     `INSERT INTO leads

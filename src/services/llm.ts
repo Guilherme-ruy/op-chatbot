@@ -61,7 +61,12 @@ function buildChatSystemPrompt(
     ? `\n\nDADOS JÁ COLETADOS (NÃO PERGUNTE NOVAMENTE):\n${collectedLines}`
     : '';
 
-  const hasContactField = sorted.some(f => f.key === 'contact');
+  const hasContactField = sorted.some(f =>
+    f.key === 'whatsapp_ou_e_mail' ||
+    f.key === 'contact' ||
+    f.key.includes('contato') ||
+    f.key.includes('whatsapp')
+  );
   const phoneValidation = hasContactField ? `
 VALIDAÇÃO DE CONTATO BRASILEIRO:
 - Celular com DDD: 11 dígitos (ex: 11987654321) ✓

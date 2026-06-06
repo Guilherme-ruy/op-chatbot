@@ -387,13 +387,14 @@ export async function restoreSite(id: string): Promise<Site | null> {
 
 // ── Site fields (campos de coleta configuráveis) ──────────────────────────────
 
-/** Campos padrão inseridos ao criar um site */
+/** Campos padrão inseridos ao criar um site.
+ *  As chaves correspondem ao que toSlug() geraria a partir dos labels. */
 export const DEFAULT_SITE_FIELDS: Omit<SiteField, 'id' | 'site_id' | 'created_at'>[] = [
-  { key: 'name',        label: 'Nome do visitante',         hint: null,                                                                                                                        required: true,  sort_order: 0 },
-  { key: 'service',     label: 'Tipo de serviço',           hint: 'Pergunte qual tipo de serviço o visitante precisa. Exemplos: site, sistema, hospedagem, outro. Aceite a resposta como está.', required: true,  sort_order: 1 },
-  { key: 'client_type', label: 'Pessoa física ou empresa',  hint: 'Pergunte se é pessoa física ou empresa. Se pessoa física retorne pf, se empresa retorne pj.',                              required: false, sort_order: 2 },
-  { key: 'cnpj',        label: 'CNPJ',                      hint: 'Se o cliente informou ser empresa, pergunte o CNPJ para personalizar a proposta. É opcional — se não quiser informar, siga em frente.', required: false, sort_order: 3 },
-  { key: 'contact',     label: 'WhatsApp ou e-mail',        hint: null,                                                                                                                        required: true,  sort_order: 4 },
+  { key: 'nome_do_visitante',       label: 'Nome do visitante',        hint: null,                                                                                                                        required: true,  sort_order: 0 },
+  { key: 'tipo_de_servico',         label: 'Tipo de serviço',          hint: 'Pergunte qual tipo de serviço o visitante precisa. Exemplos: site, sistema, hospedagem, outro. Aceite a resposta como está.', required: true,  sort_order: 1 },
+  { key: 'pessoa_fisica_ou_empresa',label: 'Pessoa física ou empresa', hint: 'Pergunte se é pessoa física ou empresa. Se pessoa física retorne pf, se empresa retorne pj.',                              required: false, sort_order: 2 },
+  { key: 'cnpj',                    label: 'CNPJ',                      hint: 'Se o cliente informou ser empresa, pergunte o CNPJ para personalizar a proposta. É opcional — se não quiser informar, siga em frente.', required: false, sort_order: 3 },
+  { key: 'whatsapp_ou_e_mail',      label: 'WhatsApp ou e-mail',       hint: null,                                                                                                                        required: true,  sort_order: 4 },
 ];
 
 export async function listSiteFields(siteId: string): Promise<SiteField[]> {

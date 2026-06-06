@@ -59,6 +59,12 @@ BEGIN
   END LOOP;
 END $$;
 
+-- Corrige chaves dos campos padrão para refletir os labels em português (toSlug)
+UPDATE site_fields SET key = 'nome_do_visitante'        WHERE key = 'name'        AND label = 'Nome do visitante';
+UPDATE site_fields SET key = 'tipo_de_servico'          WHERE key = 'service'     AND label = 'Tipo de serviço';
+UPDATE site_fields SET key = 'pessoa_fisica_ou_empresa' WHERE key = 'client_type' AND label = 'Pessoa física ou empresa';
+UPDATE site_fields SET key = 'whatsapp_ou_e_mail'       WHERE key = 'contact'     AND label = 'WhatsApp ou e-mail';
+
 -- Índice para contagem rápida de sessões mensais por site
 CREATE INDEX IF NOT EXISTS idx_sessions_site_month
   ON sessions(site_id, created_at);

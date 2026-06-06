@@ -209,19 +209,25 @@ export async function chatRoutes(app: FastifyInstance) {
         throw err;
       }
 
-      // 6. Valida contato ANTES de salvar/qualificar (somente se campo 'contact' existe)
-      const hasContactField = siteFields.some(f => f.key === 'contact');
+      // 6. Valida contato ANTES de salvar/qualificar
+      // Detecta o campo de contato pela chave (suporta chaves padrão e customizadas)
+      const contactField = siteFields.find(f =>
+        f.key === 'whatsapp_ou_e_mail' ||
+        f.key === 'contact' ||
+        f.key.includes('contato') ||
+        f.key.includes('whatsapp')
+      );
       let contactInvalidReason: string | null = null;
-      if (hasContactField && aiResult.collected['contact']) {
-        const cv = validateBrazilianContact(aiResult.collected['contact']);
+      if (contactField && aiResult.collected[contactField.key]) {
+        const cv = validateBrazilianContact(aiResult.collected[contactField.key]!);
         if (!cv.valid) {
           contactInvalidReason = cv.reason;
-          const validationMsg = contactValidationMessage(aiResult.collected['contact'], cv.reason);
+          const validationMsg = contactValidationMessage(aiResult.collected[contactField.key]!, cv.reason);
           aiResult = {
             ...aiResult,
             message: validationMsg,
             qualified: false,
-            collected: { ...aiResult.collected, contact: null },
+            collected: { ...aiResult.collected, [contactField.key]: null },
           };
         }
       }
