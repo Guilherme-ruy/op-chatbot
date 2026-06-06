@@ -32,7 +32,7 @@ Lista todos os sites ativos com estatísticas acumuladas (sessões totais, leads
 - **Regenerar token** → invalida o token atual e gera um novo (exige digitar **SIM**)
 - **Excluir** → soft delete (dados preservados, site pode ser restaurado)
 
-**Seção "Sites excluídos"** (colapsável na mesma página) → permite restaurar um site deletado.
+**Filtro de status** (select no topo da tabela): `Ativos e Inativos` (padrão) · `Ativos` · `Inativos` · `Excluídos`. Selecionar "Excluídos" exibe os sites removidos com opção de restaurar.
 
 ### Criar / editar site
 
