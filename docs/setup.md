@@ -133,6 +133,19 @@ docker compose down
 
 O container expõe a porta `3050` mapeada para `3001` internamente.
 
+O volume nomeado `avatars` persiste os avatares enviados pelo painel entre rebuilds e deploys:
+
+```yaml
+volumes:
+  - avatars:/app/uploads/avatars
+```
+
+Para fazer backup dos avatares em produção:
+```bash
+docker run --rm -v op-chatbot_avatars:/data -v $(pwd):/backup alpine \
+  tar czf /backup/avatars-backup.tar.gz -C /data .
+```
+
 ---
 
 ## Comandos úteis

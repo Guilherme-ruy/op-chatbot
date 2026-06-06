@@ -43,9 +43,9 @@ Campos obrigatórios:
 - **WhatsApp** (formato: `5511999990000` — país + DDD + número, apenas dígitos)
 
 Campos opcionais:
-- URL do avatar do bot
+- **Avatar do bot** — upload de imagem (JPG, PNG, WebP ou GIF · máx. 2 MB). Armazenado em disco local (`uploads/avatars/`).
 - Limite mensal de conversas (`0` ou vazio = ilimitado)
-- **Mensagem ao atingir o limite** — texto exibido na bolha do widget quando o limite mensal é atingido. Máx. 500 caracteres.
+- **Mensagem no WhatsApp ao atingir o limite** — texto pré-preenchido no WhatsApp quando o visitante clica no botão de fallback. Máx. 500 caracteres.
 
 O token é gerado automaticamente ao criar. Ao criar ou regenerar, o painel exibe o snippet `<script>` completo pronto para colar no site.
 

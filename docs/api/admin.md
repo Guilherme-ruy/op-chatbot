@@ -68,6 +68,44 @@ Lista todos os sites ativos (não deletados) com estatísticas agregadas.
 
 ---
 
+---
+
+## Upload
+
+### POST /upload/avatar
+
+Faz upload de uma imagem de avatar. Retorna a URL pública do arquivo salvo.
+
+**Content-Type:** `multipart/form-data`  
+**Campo:** `file` (imagem)  
+**Restrições:** JPG, PNG, WebP ou GIF · máx. 2 MB
+
+**Response 200:**
+```json
+{ "url": "/uploads/avatars/uuid.png" }
+```
+
+**Response 400:** formato inválido  
+**Response 413:** arquivo maior que 2 MB
+
+> A URL retornada deve ser salva em `bot_avatar_url` via `PATCH /sites/:id`.
+
+---
+
+### DELETE /upload/avatar
+
+Remove um avatar do disco.
+
+**Request:**
+```json
+{ "path": "/uploads/avatars/uuid.png" }
+```
+
+**Response 204** (sem corpo)  
+Falha silenciosa se o arquivo não existir. Rejeita caminhos fora de `/uploads/avatars/`.
+
+---
+
 ### GET /sites/deleted
 
 Lista sites em soft delete (excluídos pelo painel).

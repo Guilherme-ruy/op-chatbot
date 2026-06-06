@@ -17,7 +17,7 @@ Cada site/cliente cadastrado no painel. O `token` é enviado pelo widget para id
 | `domain` | VARCHAR(255) | UNIQUE | Domínio do site (sem http) |
 | `token` | VARCHAR(100) | UNIQUE | Token secreto do widget |
 | `bot_name` | VARCHAR(100) | — | Nome do assistente no chat |
-| `bot_avatar_url` | TEXT | ✓ | URL do avatar do bot |
+| `bot_avatar_url` | TEXT | ✓ | URL do avatar do bot. Uploads locais ficam em `/uploads/avatars/` |
 | `whatsapp_number` | VARCHAR(20) | ✓ | Número WhatsApp (ex: `5511999990000`) |
 | `plan_name` | VARCHAR(50) | ✓ | Nome do plano (ex: Básico, Pro) |
 | `monthly_session_limit` | INT | ✓ | Limite de conversas/mês. `NULL` ou `0` = ilimitado |
