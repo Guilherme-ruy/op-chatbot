@@ -11,6 +11,7 @@ import {
   getSiteById,
   getSiteByIdIncludeDeleted,
   getSiteDetailStats,
+  getAllSitesStats,
 } from '../../services/adminDatabase';
 
 export async function adminSitesRoutes(app: FastifyInstance) {
@@ -113,6 +114,15 @@ export async function adminSitesRoutes(app: FastifyInstance) {
     const token = await regenerateSiteToken(id);
     if (!token) return reply.code(404).send({ error: 'Site não encontrado.' });
     return reply.send({ token });
+  });
+
+  // GET /api/admin/sites/all/stats?days=30 — visão agregada de todos os sites
+  app.get('/api/admin/sites/all/stats', auth, async (request, reply) => {
+    const { days } = request.query as { days?: string };
+    const validDays = [0, 7, 30, 90];
+    const daysNum = validDays.includes(Number(days)) ? Number(days) : 30;
+    const stats = await getAllSitesStats(daysNum);
+    return reply.send(stats);
   });
 
   // GET /api/admin/sites/:id/stats?days=30 — visão detalhada por site
