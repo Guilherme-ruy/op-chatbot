@@ -41,12 +41,13 @@ Todas as variáveis ficam no arquivo `.env` na raiz do projeto (nunca versionado
 
 > **Estas variáveis são opcionais.** A configuração SMTP pode ser feita diretamente no painel admin (página **E-mail**), onde fica armazenada no banco de dados e tem precedência sobre as variáveis de ambiente. Use o `.env` como fallback ou para ambientes sem painel ativo.
 
-### CORS e Limites
+### Limites
 
 | Variável | Padrão | Descrição |
 |---|---|---|
-| `ALLOWED_ORIGINS` | `localhost` | Domínios autorizados a usar o widget, separados por vírgula |
-| `MAX_MESSAGES_PER_SESSION` | `20` | Limite de mensagens por sessão (guardrail de custo de LLM) |
+| `MAX_MESSAGES_PER_SESSION` | `20` | Máximo de mensagens por conversa (guardrail de custo LLM) |
+
+> Os domínios autorizados a usar o widget são lidos diretamente do banco — qualquer site cadastrado no painel funciona automaticamente, sem variável de ambiente.
 
 ---
 

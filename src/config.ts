@@ -28,11 +28,6 @@ export const config = {
 
   notificationEmail: process.env.NOTIFICATION_EMAIL || '',
 
-  // Allowed origins for the widget
-  allowedOrigins: (process.env.ALLOWED_ORIGINS || 'localhost')
-    .split(',')
-    .map(d => d.trim()),
-
   maxMessagesPerSession: parseInt(process.env.MAX_MESSAGES_PER_SESSION || '20'),
 
   // Admin panel

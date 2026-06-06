@@ -19,6 +19,24 @@ import { adminFieldsRoutes }    from './routes/admin/fields';
 import { adminSmtpRoutes }      from './routes/admin/smtp';
 import { cleanupStaleSessions } from './services/database';
 
+// ── Cache de domínios CORS ────────────────────────────────────────────────────
+// Os domínios permitidos são lidos do banco (tabela sites) com TTL de 60s.
+// Assim qualquer site cadastrado no painel funciona automaticamente, sem
+// precisar de ALLOWED_ORIGINS no .env.
+
+let _corsCache: Set<string> | null = null;
+let _corsCacheExpiry = 0;
+
+async function getCorsAllowedDomains(): Promise<Set<string>> {
+  if (_corsCache && Date.now() < _corsCacheExpiry) return _corsCache;
+  const { rows } = await pool.query<{ domain: string }>(
+    'SELECT domain FROM sites WHERE deleted_at IS NULL'
+  );
+  _corsCache       = new Set(rows.map(r => r.domain));
+  _corsCacheExpiry = Date.now() + 60_000; // 60 segundos
+  return _corsCache;
+}
+
 async function build() {
   const app = Fastify({
     logger: { level: config.isDev ? 'info' : 'warn' },
@@ -31,15 +49,19 @@ async function build() {
       if (!origin) return cb(null, true);
 
       const host = origin.replace(/^https?:\/\//, '').replace(/\/$/, '');
-      const allowed =
-        config.isDev ||
-        host === 'localhost' ||
-        host.startsWith('localhost:') ||
-        config.allowedOrigins.some(
-          a => host === a || host.endsWith(`.${a}`)
-        );
 
-      cb(allowed ? null : new Error('Origem bloqueada por CORS'), allowed);
+      // Sempre permite localhost (dev local)
+      if (config.isDev || host === 'localhost' || host.startsWith('localhost:')) {
+        return cb(null, true);
+      }
+
+      // Consulta domínios registrados no banco (cache 60s)
+      getCorsAllowedDomains()
+        .then(domains => {
+          const allowed = [...domains].some(d => host === d || host.endsWith(`.${d}`));
+          cb(allowed ? null : new Error('Origem bloqueada por CORS'), allowed);
+        })
+        .catch(() => cb(null, false)); // erro no DB → nega por segurança
     },
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
