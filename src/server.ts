@@ -69,12 +69,19 @@ async function build() {
   });
 
   // ── Rate Limit ──────────────────────────────────────────────────────────────
+  // Aplicado APENAS às rotas públicas do widget (/api/chat/*).
+  // Rotas admin já são protegidas por JWT e não precisam de rate limit global.
   await app.register(rateLimit, {
     max: 60,
     timeWindow: '1 minute',
-    errorResponseBuilder: () => ({
-      error: 'Muitas requisições. Aguarde um momento.',
-    }),
+    skip: (request) =>
+      request.url.startsWith('/api/admin') ||
+      !request.url.startsWith('/api/chat'),
+    errorResponseBuilder: () => {
+      const err = new Error('Muitas requisições. Aguarde um momento.') as Error & { statusCode: number };
+      err.statusCode = 429;
+      return err;
+    },
   });
 
   // ── JWT (admin) ─────────────────────────────────────────────────────────────
