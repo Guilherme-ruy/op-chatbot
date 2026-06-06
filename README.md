@@ -12,7 +12,7 @@ Chatbot de qualificação de leads para agências web. Integra em qualquer site 
 
 O visitante chega ao site do cliente → o widget aparece automaticamente → uma conversa guiada por LLM coleta nome, tipo de projeto e contato → quando o lead está qualificado, o input desaparece, um botão de WhatsApp pré-preenchido é exibido e uma notificação chega por e-mail.
 
-Tudo isso sem nenhuma modificação no site do cliente além de uma tag `<script>`.
+Tudo isso sem nenhuma modificação no site do cliente além de uma tag `<script>` antes do `</body>`.
 
 ---
 
