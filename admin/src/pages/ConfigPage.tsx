@@ -43,7 +43,6 @@ export default function ConfigPage() {
   const [formSaving,  setFormSaving]  = useState(false)
   const [editingId,   setEditingId]   = useState<string | null>(null)
   const [form,        setForm]        = useState<SiteFieldFormData>(EMPTY_FORM)
-  const [keyTouched,  setKeyTouched]  = useState(false) // evita sobrescrever chave editada manualmente
 
   // Confirm dialog (delete / reset)
   const [confirmOpen,    setConfirmOpen]    = useState(false)
@@ -72,28 +71,18 @@ export default function ConfigPage() {
   function openCreate() {
     setEditingId(null)
     setForm(EMPTY_FORM)
-    setKeyTouched(false)
     setFormOpen(true)
   }
 
   function openEdit(field: SiteField) {
     setEditingId(field.id)
     setForm({ key: field.key, label: field.label, hint: field.hint ?? '', required: field.required })
-    setKeyTouched(true) // em edição nunca auto-preenche a chave
     setFormOpen(true)
   }
 
   function handleLabelChange(label: string) {
-    setForm(f => ({
-      ...f,
-      label,
-      key: (!keyTouched || !f.key) ? toSlug(label) : f.key,
-    }))
-  }
-
-  function handleKeyChange(key: string) {
-    setKeyTouched(true)
-    setForm(f => ({ ...f, key }))
+    // Chave sempre gerada automaticamente a partir do label
+    setForm(f => ({ ...f, label, key: toSlug(label) }))
   }
 
   async function handleSave() {
@@ -366,17 +355,15 @@ export default function ConfigPage() {
 
             {/* Key */}
             <div className="space-y-1.5">
-              <Label>Chave (identificador) {!editingId && <span className="text-destructive">*</span>}</Label>
+              <Label>Chave (identificador)</Label>
               <Input
                 value={form.key}
-                onChange={e => handleKeyChange(e.target.value)}
-                placeholder="Ex: service"
-                disabled={!!editingId}
-                className={editingId ? 'bg-slate-50 text-muted-foreground' : ''}
+                readOnly
+                placeholder="gerado automaticamente…"
+                className="bg-slate-50 text-muted-foreground cursor-default"
               />
               <p className="text-xs text-muted-foreground">
-                Identificador único em snake_case. Gerado automaticamente a partir do nome.
-                {editingId && ' Não pode ser alterado após a criação.'}
+                Gerado automaticamente a partir do nome. Não pode ser alterado após a criação.
               </p>
             </div>
 
