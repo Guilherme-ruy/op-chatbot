@@ -11,7 +11,7 @@ Todas as variáveis ficam no arquivo `.env` na raiz do projeto (nunca versionado
 | Variável | Padrão | Descrição |
 |---|---|---|
 | `PORT` | `3001` | Porta em que o Fastify escuta |
-| `NODE_ENV` | `development` | `development` ou `production` |
+| `NODE_ENV` | `development` | `development` ou `production`. Afeta: nível de log (info vs warn), validação de CORS (permissivo vs banco) e cache do widget.js (sem cache vs 5 min) |
 
 ### LLM
 
