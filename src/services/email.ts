@@ -1,16 +1,51 @@
 import nodemailer from 'nodemailer';
 import { config } from '../config';
 import type { SiteField } from '../types';
+import { getSmtpSettings } from './adminDatabase';
 
-const transporter = nodemailer.createTransport({
-  host:   config.smtp.host,
-  port:   config.smtp.port,
-  secure: config.smtp.port === 465,
-  auth: {
-    user: config.smtp.user,
-    pass: config.smtp.pass,
-  },
-});
+// ── Transporter factory ───────────────────────────────────────────────────────
+// Lido do banco a cada envio para refletir alterações feitas no painel admin
+// sem precisar reiniciar o servidor.
+// Fallback: variáveis de ambiente (SMTP_USER, SMTP_PASS, NOTIFICATION_EMAIL).
+
+async function buildTransporter(): Promise<{
+  transporter: nodemailer.Transporter;
+  from: string;
+  notificationEmail: string;
+}> {
+  const db = await getSmtpSettings();
+
+  if (db?.user_email && db?.pass) {
+    return {
+      transporter: nodemailer.createTransport({
+        host:   db.host,
+        port:   db.port,
+        secure: db.port === 465,
+        auth:   { user: db.user_email, pass: db.pass },
+      }),
+      from:              db.from_address || `Chatbot <${db.user_email}>`,
+      notificationEmail: db.notification_email,
+    };
+  }
+
+  // Fallback: variáveis de ambiente
+  if (!config.smtp.user || !config.smtp.pass || !config.notificationEmail) {
+    throw new Error(
+      'SMTP não configurado. Acesse Painel → E-mail para configurar, ou defina SMTP_USER, SMTP_PASS e NOTIFICATION_EMAIL no .env.'
+    );
+  }
+
+  return {
+    transporter: nodemailer.createTransport({
+      host:   config.smtp.host,
+      port:   config.smtp.port,
+      secure: config.smtp.port === 465,
+      auth:   { user: config.smtp.user, pass: config.smtp.pass },
+    }),
+    from:              config.smtp.from || `Chatbot <${config.smtp.user}>`,
+    notificationEmail: config.notificationEmail,
+  };
+}
 
 // ── Template HTML do e-mail ───────────────────────────────────────────────────
 
@@ -92,9 +127,9 @@ export async function sendLeadNotification(
   siteName: string,
   whatsappUrl: string
 ): Promise<void> {
-  const name    = customData['name'] ?? 'Visitante';
-  const contact = customData['contact'] ?? '';
+  const { transporter, from, notificationEmail } = await buildTransporter();
 
+  const name = customData['nome_do_visitante'] ?? customData['name'] ?? 'Visitante';
   const subject = `🎯 Novo lead: ${name} (${siteName})`;
 
   // Texto simples para clientes de e-mail sem HTML
@@ -111,12 +146,10 @@ export async function sendLeadNotification(
   ].join('\n');
 
   await transporter.sendMail({
-    from:    config.smtp.from,
-    to:      config.notificationEmail,
+    from,
+    to:      notificationEmail,
     subject,
     html:    buildEmailHtml(customData, fields, siteName, whatsappUrl),
     text:    textBody,
   });
-
-  void contact; // usado implicitamente no nome
 }

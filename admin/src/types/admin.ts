@@ -108,3 +108,27 @@ export interface SiteFieldFormData {
   required: boolean
   sort_order?: number
 }
+
+// ── SMTP Settings ─────────────────────────────────────────────────────────────
+
+/** Configuração SMTP retornada pela API (senha nunca exposta). */
+export interface SmtpSettingsPublic {
+  id:                 number
+  host:               string
+  port:               number
+  user_email:         string
+  pass_configured:    boolean
+  from_address:       string
+  notification_email: string
+  updated_at:         string
+}
+
+/** Payload para salvar configuração SMTP. */
+export interface SmtpSettingsInput {
+  host:               string
+  port:               number
+  user_email:         string
+  pass?:              string  // omitir ou vazio = mantém senha existente
+  from_address:       string
+  notification_email: string
+}

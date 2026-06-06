@@ -17,15 +17,16 @@ export const config = {
 
   databaseUrl: required('DATABASE_URL'),
 
+  // SMTP — opcional via env; pode ser sobrescrito pelo painel admin (smtp_settings)
   smtp: {
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
     port: parseInt(process.env.SMTP_PORT || '587'),
-    user: required('SMTP_USER'),
-    pass: required('SMTP_PASS'),
-    from: process.env.SMTP_FROM || 'Chatbot <noreply@example.com>',
+    user: process.env.SMTP_USER || '',
+    pass: process.env.SMTP_PASS || '',
+    from: process.env.SMTP_FROM || '',
   },
 
-  notificationEmail: required('NOTIFICATION_EMAIL'),
+  notificationEmail: process.env.NOTIFICATION_EMAIL || '',
 
   // Allowed origins for the widget
   allowedOrigins: (process.env.ALLOWED_ORIGINS || 'localhost')

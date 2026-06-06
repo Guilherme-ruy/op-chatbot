@@ -1,15 +1,16 @@
 import { useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/stores/auth'
-import { Building2, Users, MessageSquare, BarChart3, Bot, LogOut, Menu, Settings } from 'lucide-react'
+import { Building2, Users, MessageSquare, BarChart3, Bot, LogOut, Menu, Settings, Mail } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const navItems = [
-  { title: 'Sites',          icon: Building2,     to: '/clients'       },
-  { title: 'Leads',          icon: Users,         to: '/leads'         },
-  { title: 'Sessões',        icon: MessageSquare, to: '/sessions'      },
-  { title: 'Dashboard',      icon: BarChart3,     to: '/dashboard'     },
-  { title: 'Configurações',  icon: Settings,      to: '/config'        },
+  { title: 'Sites',          icon: Building2,     to: '/clients'   },
+  { title: 'Leads',          icon: Users,         to: '/leads'     },
+  { title: 'Sessões',        icon: MessageSquare, to: '/sessions'  },
+  { title: 'Dashboard',      icon: BarChart3,     to: '/dashboard' },
+  { title: 'Configurações',  icon: Settings,      to: '/config'    },
+  { title: 'E-mail',         icon: Mail,          to: '/smtp'      },
 ]
 
 export default function AdminLayout() {

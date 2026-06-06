@@ -65,6 +65,19 @@ UPDATE site_fields SET key = 'tipo_de_servico'          WHERE key = 'service'   
 UPDATE site_fields SET key = 'pessoa_fisica_ou_empresa' WHERE key = 'client_type' AND label = 'Pessoa física ou empresa';
 UPDATE site_fields SET key = 'whatsapp_ou_e_mail'       WHERE key = 'contact'     AND label = 'WhatsApp ou e-mail';
 
+-- Configurações SMTP globais (tabela de linha única — zero ou uma linha)
+-- Quando presente, tem precedência sobre as variáveis de ambiente.
+CREATE TABLE IF NOT EXISTS smtp_settings (
+  id                 SERIAL      PRIMARY KEY,
+  host               TEXT        NOT NULL DEFAULT 'smtp.gmail.com',
+  port               INT         NOT NULL DEFAULT 587,
+  user_email         TEXT        NOT NULL DEFAULT '',
+  pass               TEXT        NOT NULL DEFAULT '',
+  from_address       TEXT        NOT NULL DEFAULT '',
+  notification_email TEXT        NOT NULL DEFAULT '',
+  updated_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- Índice para contagem rápida de sessões mensais por site
 CREATE INDEX IF NOT EXISTS idx_sessions_site_month
   ON sessions(site_id, created_at);

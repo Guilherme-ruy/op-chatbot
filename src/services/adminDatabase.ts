@@ -779,3 +779,62 @@ export async function getAllSitesStats(days = 30): Promise<SiteDetailStats> {
     recent_leads:             recentLeadsRes.rows,
   };
 }
+
+// ── SMTP Settings ─────────────────────────────────────────────────────────────
+
+export interface SmtpSettings {
+  id:                 number;
+  host:               string;
+  port:               number;
+  user_email:         string;
+  pass:               string;
+  from_address:       string;
+  notification_email: string;
+  updated_at:         string;
+}
+
+/** Retorna a configuração SMTP salva no banco (null se nunca configurado). */
+export async function getSmtpSettings(): Promise<SmtpSettings | null> {
+  const { rows } = await pool.query<SmtpSettings>(
+    'SELECT * FROM smtp_settings LIMIT 1'
+  );
+  return rows[0] ?? null;
+}
+
+/**
+ * Cria ou atualiza a configuração SMTP (tabela de linha única).
+ * Se `pass` for omitido ou vazio, a senha existente é preservada.
+ */
+export async function upsertSmtpSettings(data: {
+  host:               string;
+  port:               number;
+  user_email:         string;
+  pass?:              string;
+  from_address:       string;
+  notification_email: string;
+}): Promise<SmtpSettings> {
+  const existing = await getSmtpSettings();
+
+  if (!existing) {
+    const { rows } = await pool.query<SmtpSettings>(
+      `INSERT INTO smtp_settings (host, port, user_email, pass, from_address, notification_email)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [data.host, data.port, data.user_email, data.pass ?? '',
+       data.from_address, data.notification_email]
+    );
+    return rows[0];
+  }
+
+  // Preserva a senha existente se o caller não enviou uma nova
+  const pass = (data.pass !== undefined && data.pass !== '') ? data.pass : existing.pass;
+
+  const { rows } = await pool.query<SmtpSettings>(
+    `UPDATE smtp_settings
+     SET host = $1, port = $2, user_email = $3, pass = $4,
+         from_address = $5, notification_email = $6, updated_at = NOW()
+     WHERE id = $7 RETURNING *`,
+    [data.host, data.port, data.user_email, pass,
+     data.from_address, data.notification_email, existing.id]
+  );
+  return rows[0];
+}

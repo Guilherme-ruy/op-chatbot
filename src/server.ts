@@ -16,6 +16,7 @@ import { adminSessionsRoutes }  from './routes/admin/sessions';
 import { adminDashboardRoutes } from './routes/admin/dashboard';
 import { adminUploadRoutes }    from './routes/admin/upload';
 import { adminFieldsRoutes }    from './routes/admin/fields';
+import { adminSmtpRoutes }      from './routes/admin/smtp';
 import { cleanupStaleSessions } from './services/database';
 
 async function build() {
@@ -102,6 +103,7 @@ async function build() {
   await app.register(adminDashboardRoutes);
   await app.register(adminUploadRoutes);
   await app.register(adminFieldsRoutes);
+  await app.register(adminSmtpRoutes);
 
   // ── Admin SPA (Vue 3 + Vuetify) — catch-all para Vue Router history mode ────
   // Deve vir DEPOIS dos plugins estáticos para que arquivos reais tenham prioridade

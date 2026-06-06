@@ -8,6 +8,7 @@ import LeadsPage      from '@/pages/LeadsPage'
 import SessionsPage   from '@/pages/SessionsPage'
 import DashboardPage  from '@/pages/DashboardPage'
 import ConfigPage     from '@/pages/ConfigPage'
+import SmtpPage       from '@/pages/SmtpPage'
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore(s => s.isAuthenticated)
@@ -33,6 +34,7 @@ export default function App() {
         <Route path="sessions"    element={<SessionsPage />} />
         <Route path="dashboard"   element={<DashboardPage />} />
         <Route path="config"      element={<ConfigPage />} />
+        <Route path="smtp"        element={<SmtpPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/clients" replace />} />
     </Routes>
