@@ -26,6 +26,11 @@ Visitante no site do cliente
                       ├─ Salva lead (custom_data + colunas indexadas)
                       ├─ Gera URL WhatsApp com todos os campos coletados
                       └─ Envia e-mail de notificação (assíncrono)
+
+Inicialização do servidor
+        ├─ runMigrations() — schema + admin_migration (idempotente)
+        ├─ cleanupStaleSessions(30min) — encerra sessões 'active' sem atividade
+        └─ setInterval(cleanupStaleSessions, 1h) — repete a cada hora
 ```
 
 ---

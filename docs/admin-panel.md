@@ -85,11 +85,31 @@ A coluna **Dados coletados** exibe todos os campos capturados para o lead (excet
 
 ## Sessões
 
-Histórico de todas as conversas (ativas, qualificadas e abandonadas).
+Histórico de todas as conversas, com filtros identificados e replay completo.
 
-**Filtros:** site, status, período.
+### Filtros
 
-**Replay de conversa:** clique no ícone de mensagem para abrir o painel lateral com:
+| Filtro | Opções |
+|---|---|
+| **Site** | Todos os sites · site individual |
+| **Status** | Todos · Ativa · Qualificada · Abandonada |
+| **Período** | Hoje · 7 dias · 30 dias (padrão) · 90 dias · Todo período |
+
+### Status de uma sessão
+
+| Status | Significado |
+|---|---|
+| **Ativa** | Conversa em andamento — o visitante pode continuar enviando mensagens |
+| **Qualificada** | Todos os campos obrigatórios foram preenchidos — lead registrado e e-mail enviado |
+| **Abandonada** | Conversa encerrada sem qualificação — visitante saiu, pediu algo fora do escopo, ou simplesmente não continuou |
+
+> Sessões **Ativas** sem nenhuma nova mensagem por **30 minutos** são marcadas automaticamente como **Abandonadas** pelo servidor. Isso cobre o caso comum de visitantes que fecham a aba sem interagir.
+
+O botão **"Como funciona"** no cabeçalho da página exibe um resumo deste ciclo de vida diretamente no painel.
+
+### Replay de conversa
+
+Clique no ícone de mensagem em qualquer linha para abrir o painel lateral com:
 - Status e dados coletados da sessão
 - Histórico completo de mensagens com timestamps
 - Bubbles visuais (visitante = verde, bot = cinza)
