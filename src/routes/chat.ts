@@ -177,7 +177,8 @@ export async function chatRoutes(app: FastifyInstance) {
 
       const site = await db.getSiteBySessionId(sessionId);
       const waNumber  = site?.whatsapp_number ?? '';
-      const siteName  = site?.name ?? 'Assistente';
+      const siteName  = site?.name ?? '';
+      const botName   = site?.bot_name ?? siteName;
 
       // 2. Verifica limite de mensagens (guardrail de custo)
       const count = await db.incrementMessageCount(sessionId);
@@ -298,7 +299,7 @@ export async function chatRoutes(app: FastifyInstance) {
           budget:      accumulated.budget      ?? null,
         };
 
-        whatsappUrl = ai.buildWhatsAppUrl(fullCollected, siteName, waNumber);
+        whatsappUrl = ai.buildWhatsAppUrl(fullCollected, siteName, waNumber, botName);
 
         const leadId = await db.saveLead(sessionId, fullCollected, siteName, whatsappUrl);
         await db.updateSessionStatus(sessionId, 'qualified');

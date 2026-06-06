@@ -197,19 +197,20 @@ export async function extractFromHistory(userMessages: string[]): Promise<Partia
 export function buildWhatsAppUrl(
   collected: LLMResponse['collected'],
   siteName: string,
-  waNumber: string
+  waNumber: string,
+  botName?: string
 ): string {
   const lines: string[] = [
-    `Olá! Acabei de conversar com o assistente de ${siteName}.`,
+    `Olá! Acabei de conversar com ${botName ?? siteName}.`,
     '',
   ];
 
-  if (collected.name)        lines.push(`👤 Nome: ${collected.name}`);
-  if (collected.projectType) lines.push(`💼 Projeto: ${collected.projectType}`);
-  if (collected.clientType)  lines.push(`🏢 Tipo: ${collected.clientType === 'pj' ? 'Empresa' : 'Pessoa física'}`);
-  if (collected.cnpj)        lines.push(`📋 CNPJ: ${collected.cnpj}`);
-  if (collected.contact)     lines.push(`📞 Contato: ${collected.contact}`);
-  if (collected.budget)      lines.push(`💰 Orçamento: ${collected.budget}`);
+  if (collected.name)        lines.push(`Nome: ${collected.name}`);
+  if (collected.projectType) lines.push(`Projeto: ${collected.projectType}`);
+  if (collected.clientType)  lines.push(`Tipo: ${collected.clientType === 'pj' ? 'Empresa' : 'Pessoa física'}`);
+  if (collected.cnpj)        lines.push(`CNPJ: ${collected.cnpj}`);
+  if (collected.contact)     lines.push(`Contato: ${collected.contact}`);
+  if (collected.budget)      lines.push(`Orcamento: ${collected.budget}`);
 
   const text = lines.join('\n');
   return `https://wa.me/${waNumber}?text=${encodeURIComponent(text)}`;

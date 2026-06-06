@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Download, Search, X, Filter, Mail, MailX, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Download, Search, X, Filter, Mail, MailX, ChevronLeft, ChevronRight } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 
 const PROJECT_LABELS: Record<string, string> = { site: 'Site', sistema: 'Sistema', hospedagem: 'Hospedagem', outro: 'Outro' }
@@ -153,16 +153,15 @@ export default function LeadsPage() {
                 <TableHead>Site</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Data</TableHead>
-                <TableHead />
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 Array.from({ length: 6 }).map((_, i) => (
-                  <TableRow key={i}>{Array.from({ length: 9 }).map((_, j) => <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>)}</TableRow>
+                  <TableRow key={i}>{Array.from({ length: 8 }).map((_, j) => <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>)}</TableRow>
                 ))
               ) : leads.length === 0 ? (
-                <TableRow><TableCell colSpan={9} className="text-center py-12 text-muted-foreground">Nenhum lead encontrado.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={8} className="text-center py-12 text-muted-foreground">Nenhum lead encontrado.</TableCell></TableRow>
               ) : leads.map(lead => (
                 <TableRow key={lead.id}>
                   <TableCell className="font-medium">{lead.name ?? '—'}</TableCell>
@@ -193,15 +192,6 @@ export default function LeadsPage() {
                     </Tooltip>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">{formatDate(lead.created_at)}</TableCell>
-                  <TableCell>
-                    {lead.whatsapp_url && (
-                      <Button asChild variant="ghost" size="icon" className="h-7 w-7 text-green-600">
-                        <a href={lead.whatsapp_url} target="_blank" rel="noreferrer">
-                          <ExternalLink size={13} />
-                        </a>
-                      </Button>
-                    )}
-                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
