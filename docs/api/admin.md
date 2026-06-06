@@ -398,3 +398,66 @@ Retorna o histórico completo de mensagens de uma sessão.
   { "id": "...", "role": "user", "content": "Oi, meu nome é João", "created_at": "..." }
 ]
 ```
+
+---
+
+## E-mail / SMTP
+
+Configuração global do servidor SMTP. Tem precedência sobre variáveis de ambiente.  
+A senha **nunca é retornada** — apenas o campo `pass_configured: boolean`.
+
+### GET /smtp
+
+Retorna a configuração atual ou `null` se nunca configurado.
+
+**Response 200:**
+```json
+{
+  "id": 1,
+  "host": "smtp.gmail.com",
+  "port": 587,
+  "user_email": "contato@exemplo.com.br",
+  "pass_configured": true,
+  "from_address": "Chatbot <contato@exemplo.com.br>",
+  "notification_email": "admin@agencia.com.br",
+  "updated_at": "2026-06-06T10:00:00Z"
+}
+```
+
+---
+
+### PATCH /smtp
+
+Cria ou atualiza a configuração SMTP.
+
+**Request:**
+```json
+{
+  "host": "smtp.gmail.com",
+  "port": 587,
+  "user_email": "contato@exemplo.com.br",
+  "pass": "nova_senha",
+  "from_address": "Chatbot <contato@exemplo.com.br>",
+  "notification_email": "admin@agencia.com.br"
+}
+```
+
+> `pass` é opcional — omitir ou enviar string vazia preserva a senha existente no banco.
+
+**Campos obrigatórios:** `host`, `user_email`, `from_address`, `notification_email`
+
+**Response 200:** Configuração atualizada (mesmo formato do GET, sem `pass`).
+
+**Response 400:** Campo obrigatório ausente.
+
+---
+
+### POST /smtp/test
+
+Envia um e-mail de teste para o `notification_email` configurado. Usa as configurações salvas no banco.
+
+**Response 200:** `{ "ok": true }`
+
+**Response 400:** SMTP não configurado ou e-mail de notificação ausente.
+
+**Response 5xx:** Falha de autenticação ou conexão com o servidor SMTP.

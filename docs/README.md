@@ -32,7 +32,7 @@ visitante
 
 admin
   └─ /admin (painel React + shadcn/ui)
-       └─ Sites, Leads, Sessões, Dashboard, Configurações, Visão por site
+       └─ Sites, Leads, Sessões, Dashboard, Configurações, E-mail, Visão por site
 ```
 
 ---

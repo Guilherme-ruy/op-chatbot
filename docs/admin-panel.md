@@ -17,7 +17,8 @@ Sidebar
 ├── Leads          → leads qualificados com filtros
 ├── Sessões        → histórico de conversas
 ├── Dashboard      → métricas com seletor de site e período
-└── Configurações  → campos de coleta configuráveis por site
+├── Configurações  → campos de coleta configuráveis por site
+└── E-mail         → configuração SMTP para envio de notificações
 ```
 
 ---
@@ -222,6 +223,40 @@ Campo de texto livre que diz ao bot como coletar e interpretar aquela informaç�
 ### Chave do campo
 
 Identificador único em snake_case, gerado automaticamente a partir do nome (`"Tipo de serviço"` → `tipo_de_servico`). Visível na tabela para referência. Não pode ser alterado após a criação.
+
+---
+
+## E-mail / SMTP
+
+Página para configurar o servidor de e-mail usado no envio de notificações de leads. As configurações são salvas no banco de dados e têm precedência sobre as variáveis de ambiente.
+
+### Campos
+
+| Campo | Descrição |
+|---|---|
+| **Servidor (host)** | Endereço do servidor SMTP (ex: `smtp.gmail.com`) |
+| **Porta** | Porta SMTP — `587` (STARTTLS), `465` (SSL) ou `25` |
+| **Usuário** | E-mail de autenticação no servidor SMTP |
+| **Senha** | Senha SMTP — nunca exibida após salvar. Deixar em branco ao editar preserva a senha atual |
+| **Remetente** | Nome e endereço exibidos no campo "De" (ex: `Chatbot <noreply@exemplo.com>`) |
+| **E-mail de notificação** | Destinatário das notificações de novos leads |
+
+### Status
+
+O badge no topo da página indica:
+- **Configurado** (verde) → usuário e senha estão salvos, notificações ativas
+- **Não configurado** (cinza) → SMTP não configurado; leads não geram e-mail
+
+### Testar envio
+
+O botão **"Testar envio"** (visível após salvar com senha) envia um e-mail de teste para o endereço de notificação configurado e exibe o resultado diretamente na página.
+
+### Prioridade de configuração
+
+1. **Banco de dados** (painel admin) — tem precedência quando `user_email` e senha estão preenchidos
+2. **Variáveis de ambiente** (`.env`) — fallback quando não há configuração no banco
+
+> Alterar as configurações no painel tem efeito imediato — não é necessário reiniciar o servidor.
 
 ---
 

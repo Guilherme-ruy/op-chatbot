@@ -34,10 +34,12 @@ Todas as variáveis ficam no arquivo `.env` na raiz do projeto (nunca versionado
 |---|---|---|
 | `SMTP_HOST` | `smtp.gmail.com` | Servidor SMTP |
 | `SMTP_PORT` | `587` | Porta SMTP |
-| `SMTP_USER` | — | Usuário SMTP (obrigatório) |
-| `SMTP_PASS` | — | Senha SMTP (obrigatório) |
-| `SMTP_FROM` | `Chatbot <noreply@example.com>` | Remetente dos e-mails |
-| `NOTIFICATION_EMAIL` | — | E-mail que recebe as notificações de novos leads (obrigatório) |
+| `SMTP_USER` | — | Usuário SMTP |
+| `SMTP_PASS` | — | Senha SMTP |
+| `SMTP_FROM` | — | Remetente dos e-mails (ex: `Chatbot <noreply@exemplo.com>`) |
+| `NOTIFICATION_EMAIL` | — | E-mail que recebe as notificações de novos leads |
+
+> **Estas variáveis são opcionais.** A configuração SMTP pode ser feita diretamente no painel admin (página **E-mail**), onde fica armazenada no banco de dados e tem precedência sobre as variáveis de ambiente. Use o `.env` como fallback ou para ambientes sem painel ativo.
 
 ### CORS e Limites
 
@@ -77,13 +79,13 @@ LLM_MODEL=gemini-3.1-flash-lite
 # Banco
 DATABASE_URL=postgresql://chatbot_user:password@localhost:5432/chatbot_db
 
-# SMTP
-SMTP_HOST=smtp.example.com
-SMTP_PORT=587
-SMTP_USER=contato@guilhermeruy.com.br
-SMTP_PASS=your_smtp_password
-SMTP_FROM="Chatbot <contato@guilhermeruy.com.br>"
-NOTIFICATION_EMAIL=contato@guilhermeruy.com.br
+# SMTP (opcional — pode ser configurado pelo painel admin em vez do .env)
+# SMTP_HOST=smtp.example.com
+# SMTP_PORT=587
+# SMTP_USER=contato@exemplo.com.br
+# SMTP_PASS=your_smtp_password
+# SMTP_FROM="Chatbot <contato@exemplo.com.br>"
+# NOTIFICATION_EMAIL=contato@exemplo.com.br
 
 # CORS
 ALLOWED_ORIGINS=example.com,www.example.com

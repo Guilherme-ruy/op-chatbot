@@ -52,7 +52,8 @@ Navegador (admin)
         ├─ /admin/leads         → Leads com filtros + CSV
         ├─ /admin/sessions      → Histórico de conversas + replay
         ├─ /admin/dashboard     → KPIs + gráficos com seletor de site e período
-        └─ /admin/config        → Campos de coleta configuráveis por site
+        ├─ /admin/config        → Campos de coleta configuráveis por site
+        └─ /admin/smtp          → Configuração SMTP (host, porta, credenciais, teste)
 ```
 
 ---

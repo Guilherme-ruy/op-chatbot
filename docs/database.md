@@ -132,6 +132,23 @@ Criado quando todos os campos `required` de um site são preenchidos. Mantém co
 
 ---
 
+### `smtp_settings` — Configuração SMTP
+
+Tabela de linha única (zero ou uma linha) que armazena a configuração SMTP global. Quando presente, tem precedência sobre as variáveis de ambiente. Gerenciada pela página **E-mail** do painel admin.
+
+| Coluna | Tipo | Descrição |
+|---|---|---|
+| `id` | SERIAL | PK (sempre 1 na prática) |
+| `host` | TEXT | Servidor SMTP (ex: `smtp.gmail.com`) |
+| `port` | INT | Porta SMTP (ex: `587`, `465`) |
+| `user_email` | TEXT | Usuário/e-mail de autenticação |
+| `pass` | TEXT | Senha (nunca exposta pela API — retorna apenas `pass_configured: boolean`) |
+| `from_address` | TEXT | Remetente (ex: `Chatbot <noreply@exemplo.com>`) |
+| `notification_email` | TEXT | Destinatário das notificações de leads |
+| `updated_at` | TIMESTAMPTZ | Última atualização |
+
+---
+
 ### `admin_users` — Usuários do Painel
 
 | Coluna | Tipo | Nullable | Descrição |
